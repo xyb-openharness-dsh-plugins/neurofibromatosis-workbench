@@ -59,7 +59,7 @@ export function seedDemo(db) {
 
   // 临床研究演示条目（trial_matches：cond_state hit/miss/unknown 如实记录）
   for (const t of d.trials) {
-    const r = ins(`INSERT INTO trials (nct_id, title, phase, status_text, fetched_at) VALUES (?,?,?,?,?)`, t.nct, t.title, t.phase, t.status, '2026-10-25')
+    const r = ins(`INSERT INTO trials (nct_id, title, phase, status_text, fetched_at) VALUES (?,?,?,?,?)`, t.reg ?? t.nct, t.title, t.phase, t.status ?? '登记状态，未核实', '2026-10-25')
     for (const [cond, val, st] of t.matchDetail) {
       ins(`INSERT INTO trial_matches (profile_key, trial_id, cond_text, cond_state) VALUES (?,?,?,?)`, pk, Number(r.lastInsertRowid), `${cond}：${val}`, st === true ? 'hit' : st === false ? 'miss' : 'unknown')
     }

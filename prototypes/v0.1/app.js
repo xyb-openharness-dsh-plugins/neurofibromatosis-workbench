@@ -267,14 +267,26 @@ function renderOnechart() {
     + '<div>' + pinHTML() + '</div></section></div>';
 }
 function renderTrials() {
-  return pageHead() + `<div class="card"><h3>临床研究匹配（演示数据 · 非真实条目）</h3>
-  <p class="ctx" style="border:0;margin-top:0">链路：个人基因/病理档案 → 搜索或 AI 协助匹配 → 自带 sqlite 试验库 + 外部工具 → 匹配结果（匹配指数 + 条目化依据）。匹配指数为条件命中占比，不是入组成功率。</p>
-  ${D.trials.map(t => `<table style="margin-bottom:14px"><tr><th style="width:130px">条目</th><td>${esc(t.nct)} · ${esc(t.title)}</td></tr>
-  <tr><th>分期/状态</th><td>${esc(t.phase)} · ${esc(t.status)}</td></tr>
-  <tr><th>匹配指数</th><td><b style="font-size:15px;color:var(--accent)">${t.matchScore}%</b>（${t.matchDetail.filter(x => x[2] === true).length}/${t.matchDetail.length} 条命中）</td></tr>
-  ${t.matchDetail.map(x => `<tr><th>条件</th><td>${esc(x[0])}：${esc(x[1])} ${x[2] === true ? '<span class="pill ok">命中</span>' : x[2] === false ? '<span class="pill todo">不符合</span>' : '<span class="pill">档案未记录</span>'}</td></tr>`).join('')}
-  </table>`).join('')}
-  <p class="ctx">「档案未记录」如实显示，不用相邻病种外推。</p></div>`;
+  const hits = t => t.matchDetail.filter(x => x[2] === true).length;
+  const flagColor = { CN: '#a4561f', EU: '#2f6f8f', JP: '#22664e' };
+  return pageHead() + `
+  <div class="card" style="margin-bottom:12px"><h3>个人建档（匹配依据）</h3>
+  <div class="chips" style="margin-bottom:6px">
+    <span class="pill ok">NF1 · 丛状神经纤维瘤（记录口径）</span><span class="pill ok">9 岁</span><span class="pill ok">不可手术（记录口径）</span><span class="pill ok">既往 MEK：未使用</span><span class="pill todo">基因检测：未建档</span>
+  </div>
+  <p class="ctx">链路：个人基因/病理建档 → 搜索或 AI 协助匹配 → 自带 sqlite 试验库（nf_trials_2026.sqlite · 364 条 · 快照 2026-10-25，来源 ictrp/chinadrugtrials）+ 外部工具 → 匹配结果。基因检测未建档项如实显示，匹配指数按已建档条件计算。</p></div>
+  <p class="ctx" style="border:0;margin:0 0 10px">匹配指数 = 条件命中占比，不是入组成功率；「档案未记录」如实显示；所有条目为<b>登记状态，未核实</b>，是否参加由患者与主诊医生决定。</p>
+  ${D.trials.map(t => `<div class="card trial-card">
+    <div class="trial-top"><span class="regbadge" style="background:${flagColor[t.flag] || '#5b6470'}">${esc(t.flag)}</span><span class="regno">${esc(t.reg)}</span><span class="pill">${esc(t.phase)}</span><span class="pill">${esc(t.kind)}</span><span style="margin-left:auto;font-size:12.5px;color:var(--ink-2)">注册 ${esc(t.registered)}</span></div>
+    <p style="font-weight:600;margin:6px 0 4px">${esc(t.title)}</p>
+    <div style="display:flex;align-items:center;gap:10px;margin:8px 0">
+      <div class="matchbar"><i style="width:${t.matchScore}%"></i></div>
+      <b style="font-size:15px;color:var(--accent)">${t.matchScore}%</b>
+      <span style="font-size:12.5px;color:var(--ink-2)">命中 ${hits(t)}/${t.matchDetail.length} 项已建档条件</span>
+      <a class="text-button" href="${esc(t.url)}" target="_blank" rel="noreferrer" style="margin-left:auto">登记原文 ↗</a>
+    </div>
+    <table>${t.matchDetail.map(x => `<tr><th style="width:150px">${esc(x[0])}</th><td>${esc(x[1])} ${x[2] === true ? '<span class="pill ok">命中</span>' : x[2] === false ? '<span class="pill todo">不符合</span>' : '<span class="pill">档案未记录</span>'}</td></tr>`).join('')}</table>
+  </div>`).join('')}`;
 }
 const RENDER = { dashboard: renderDashboard, records: renderRecords, subtype: renderSubtype, calendar: renderCalendar, tumors: renderTumors, treatment: renderTreatment, genetics: renderGenetics, review: renderReview, onechart: renderOnechart, trials: renderTrials };
 
@@ -290,7 +302,7 @@ function pageContext() {
     case 'genetics': return state.privateOpen ? { ...base, 家系成员: D.genetics.members.map(m => m.rel), 问题清单数: D.genetics.questions.length } : { ...base, 家系: '私密区未展开，未携带' };
     case 'review': return { ...base, 复诊要点: D.reviewNotes, 家系: state.privateOpen ? '已展开（携带）' : '私密区未展开，未携带' };
     case 'onechart': return { ...base, 已选指标: state.chartSel.map(id => { const m = D.metricSeries.find(x => x.id === id); return m ? m.name + ' 最近 ' + (metricData(m).at(-1) || [])[2] + (m.unit || '') : id; }), 范围: state.range };
-    case 'trials': return { ...base, 匹配条目: D.trials.map(t => t.nct + ' 命中 ' + t.matchDetail.filter(x => x[2] === true).length + '/' + t.matchDetail.length), 口径: '匹配指数为条件命中占比，不是入组成功率' };
+    case 'trials': return { ...base, 档案摘要: { 分型: D.subtype.type, 年龄: 9, PN: '有（记录口径）', 既往MEK: '未使用', 基因检测: '未建档' }, 匹配条目: D.trials.map(t => t.reg + ' 命中 ' + t.matchDetail.filter(x => x[2] === true).length + '/' + t.matchDetail.length), 库快照: 'nf_trials_2026.sqlite · 364 条 · 2026-10-25' };
     default: return base;
   }
 }

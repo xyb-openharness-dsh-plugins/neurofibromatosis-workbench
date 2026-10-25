@@ -167,3 +167,11 @@ body.bigfont .page-head h1 { font-size: 15px; }
   .agent-dock { width: 100% !important; max-width: 100%; min-width: 0; }
   main { padding: 12px; }
 }
+
+/* 临床研究（真实登记条目呈现） */
+.trial-card { margin-bottom: 12px; }
+.trial-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.regbadge { color: #fff; border-radius: 4px; font-size: 12.5px; font-weight: 700; padding: 1px 6px; letter-spacing: .5px; }
+.regno { font-weight: 600; font-variant-numeric: tabular-nums; }
+.matchbar { flex: 1; max-width: 260px; height: 8px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
+.matchbar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
