@@ -2,6 +2,22 @@
 
 本机优先的神经纤维瘤病（NF1/NF2相关施万细胞瘤病/施万细胞瘤病）终身随访、瘤体档案、疼痛与听力记录、MEK抑制剂治疗线与遗传咨询准备工作台
 
+## 原型实渲截图（v0.1 · 2026-10-25 实拍）
+
+| 看板（首屏含版本号） | 瘤体与指标 · 3D 翻转卡背面 |
+| --- | --- |
+| ![看板](docs/screenshots/01-dashboard.png) | ![指标卡翻转](docs/screenshots/02-tumors-metrics-flipped.png) |
+
+| 随访日历 · 分龄折叠展开态 | 一图秀 · 指标选择窗口 |
+| --- | --- |
+| ![随访日历](docs/screenshots/03-calendar-foldout-expanded.png) | ![一图秀](docs/screenshots/04-onechart-metric-picker.png) |
+
+| 治疗线折叠卡（展态） | 临床研究匹配（匹配指数+条件明细） |
+| --- | --- |
+| ![治疗线](docs/screenshots/05-treatment-foldout.png) | ![临床研究](docs/screenshots/06-trials-match.png) |
+
+> 指标卡为分系列有序卡片墙，点击 3D 翻转看背面（最近记录+来源）；趋势折线 SVG `class="chart"`、Fritsch–Carlson 平滑；治疗线/随访日历为折叠卡，收/展两态均为验收态；独立评审 P0=0（2026-10-25，报告见 docs/PROTOTYPE-REVIEW.md）。
+
 这是接入骨架，尚未实现真实业务。初始化后先将 [项目设计提示词](docs/DESIGN-PROMPT.md) 交给当前Agent；它应展示实际路径并以已有用户/场景/流程素材对齐设计者、研究与取舍原则。癌种项目另有 [完整专用提示词](prompts/NEW-CANCER-WORKBENCH.md)。需求见 [BRIEF](docs/BRIEF.md)，规格见 [SPEC](docs/SPEC.md)，任务见 [TASKS](docs/TASKS.md)；先读 [AGENTS](AGENTS.md)。CLI输出交接与首问，实际对话由Agent接续。
 
 ## 开发顺序
