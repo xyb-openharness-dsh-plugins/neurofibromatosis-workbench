@@ -1,0 +1,18 @@
+{
+  "packageName": "@xyb-community/neurofibromatosis-workbench",
+  "title": "小纤宝 FibroPal 神经纤维瘤病工作台",
+  "repository": "https://github.com/xyb-openharness-dsh-plugins/neurofibromatosis-workbench",
+  "description": "本机优先的神经纤维瘤病（NF1/NF2相关施万细胞瘤病/施万细胞瘤病）终身随访、瘤体档案、疼痛与听力记录、MEK抑制剂治疗线与遗传咨询准备工作台",
+  "slug": "nf",
+  "targetUsers": "神经纤维瘤病患者本人及家属照护者；NF1 患儿家长为代记主体之一，成年患者自助管理；NF2/施万细胞瘤病患者含听力减退线",
+  "scenario": "多系统受累导致不知道该挂哪个科、各年龄段该查什么；全身多发瘤体患者记不清哪个瘤在变化；NF2 听力逐年下降说不清过程；MEK 抑制剂治疗中皮肤/眼部副作用反复；家系成员想了解遗传咨询该问什么",
+  "completion": "得到来源可追溯、可核对的个人病程档案：分年龄段随访日历、瘤体尺寸档案与趋势、疼痛与听力时间序列、用药线与副作用记录、遗传咨询就诊问题清单；所有候选信息经用户核对入档，不提供诊断与治疗建议",
+  "coreFlow": [
+    "选择本机资料目录并导入影像/检验/听力报告",
+    "核对候选信息，建立瘤体档案与基线指标系列",
+    "按年龄段随访日历记录复查项目与结果",
+    "记录疼痛、听力与用药线（含 MEK 抑制剂副作用）",
+    "生成复诊与遗传咨询准备材料"
+  ],
+  "layoutMode": "business-first"
+}
