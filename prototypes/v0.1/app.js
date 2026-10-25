@@ -276,7 +276,28 @@ function renderTrials() {
   <p class="ctx">「档案未记录」如实显示，不用相邻病种外推。</p></div>`;
 }
 const RENDER = { dashboard: renderDashboard, records: renderRecords, subtype: renderSubtype, calendar: renderCalendar, tumors: renderTumors, treatment: renderTreatment, genetics: renderGenetics, review: renderReview, onechart: renderOnechart, trials: renderTrials };
-function pageHead() { const p = PAGES.find(x => x[0] === state.view); return `<div class="page-head"><h1>${esc(p[1])}</h1><p>${esc(SUBTITLES[state.view])}</p></div>`; }
+
+/* ---- 每页「和AI讨论」上下文（34 号 agent-draft；私密三出口同口径） ---- */
+function pageContext() {
+  const base = { 页面: PAGES.find(p => p[0] === state.view)[1] };
+  switch (state.view) {
+    case 'dashboard': return { ...base, 分型: D.subtype.type, 年龄段待办: D.ageBands[0].items.filter(i => i.todo || !i.done).map(i => i.name), 瘤体最近值: D.tumors.map(t => t.id + ' ' + t.series.at(-1)[2] + 'mm') };
+    case 'subtype': return { ...base, 分型: D.subtype.type, 受累系统: D.subtype.systems, 来源: D.subtype.sourceNote };
+    case 'calendar': return { ...base, 当前年龄段: D.ageBands[0].title, 待办: D.ageBands[0].items.filter(i => i.todo || !i.done).map(i => i.name + '（' + i.freq + '）'), 各段项目数: D.ageBands.map(b => b.title + ':' + b.items.length) };
+    case 'tumors': return { ...base, 瘤体: D.tumors.map(t => t.id + ' ' + t.site + ' 最近 ' + t.series.at(-1)[2] + 'mm'), 已选指标: state.chartSel, 卡片系列数: D.metricSeries.length };
+    case 'treatment': return { ...base, 治疗线: D.treatmentLines.map(l => l.title), 副作用: D.sideEffects.map(e => e.what + ' ' + e.onset + '→' + e.eased) };
+    case 'genetics': return state.privateOpen ? { ...base, 家系成员: D.genetics.members.map(m => m.rel), 问题清单数: D.genetics.questions.length } : { ...base, 家系: '私密区未展开，未携带' };
+    case 'review': return { ...base, 复诊要点: D.reviewNotes, 家系: state.privateOpen ? '已展开（携带）' : '私密区未展开，未携带' };
+    case 'onechart': return { ...base, 已选指标: state.chartSel.map(id => { const m = D.metricSeries.find(x => x.id === id); return m ? m.name + ' 最近 ' + (metricData(m).at(-1) || [])[2] + (m.unit || '') : id; }), 范围: state.range };
+    case 'trials': return { ...base, 匹配条目: D.trials.map(t => t.nct + ' 命中 ' + t.matchDetail.filter(x => x[2] === true).length + '/' + t.matchDetail.length), 口径: '匹配指数为条件命中占比，不是入组成功率' };
+    default: return base;
+  }
+}
+function discussPrompt() {
+  return ({ dashboard: '帮我看着板子里的待办和变化，告诉我复诊前该准备什么', subtype: '帮我用大白话解释这个分型和受累系统，就诊时该问什么', calendar: '帮我核对当前年龄段的随访项目，哪些该预约了', tumors: '帮我总结瘤体记录的变化，整理成复诊时能说清的一段话', treatment: '帮我整理治疗线和副作用时间线', genetics: '帮我准备遗传咨询的问题清单', review: '帮我把复诊准备理成一页', onechart: '帮我解读当前选中的指标趋势（只描述，不判断）', trials: '帮我解释这些临床研究条目和匹配依据' })[state.view] || '帮我看看这页的信息';
+}
+
+function pageHead() { const p = PAGES.find(x => x[0] === state.view); return `<div class="page-head"><h1>${esc(p[1])}</h1><p>${esc(SUBTITLES[state.view])}</p><button class="text-button discuss-btn" data-action="discuss">和AI讨论 ↗</button></div>`; }
 
 /* ---- 弹窗 ---- */
 function modal(html) { const root = $('#modal-root'); root.hidden = false; root.innerHTML = `<div class="modal-mask"><div class="modal">${html}</div></div>`; }
@@ -318,6 +339,17 @@ document.addEventListener('click', (e) => {
   else if (act.dataset.toggle) { const k = act.dataset.toggle; state.toggles[k] = !state.toggles[k]; render(); }
   else if (act.dataset.pin) { state.pin = act.dataset.pin; render(); }
   else if (a === 'unpin') { state.pin = null; render(); }
+  else if (a === 'discuss') {
+    const dock = $('#agent-dock');
+    if (dock.hidden) { dock.hidden = false; $('#agent-toggle').setAttribute('aria-expanded', 'true'); $('#agent-state').textContent = '面板已打开'; }
+    const ctx = pageContext();
+    const uri = 'xxx:agent-draft?prompt=' + encodeURIComponent(discussPrompt()) + '&context=' + encodeURIComponent(JSON.stringify(ctx));
+    const slot = dock.querySelector('.agent-carry');
+    slot.innerHTML = '<b>本页携带（34 号 agent-draft）</b><pre style="white-space:pre-wrap;font-size:12.5px;margin:4px 0">' + esc(JSON.stringify(ctx, null, 1)) + '</pre>'
+      + '<p class="agent-hint">' + esc(uri.slice(0, 160)) + '…</p>';
+    slot.hidden = false;
+    slot.scrollIntoView({ block: 'nearest' });
+  }
   else if (a === 'private') { state.privateOpen = !state.privateOpen; render(); }
   else if (a === 'agent') { const d = $('#agent-dock'); d.hidden = !d.hidden; $('#agent-toggle').setAttribute('aria-expanded', String(!d.hidden)); $('#agent-state').textContent = d.hidden ? '未进入激活' : '面板已打开'; }
   else if (a === 'agent-size') { $('#agent-dock').dataset.size = act.dataset.size; $('#agent-dock').querySelectorAll('[data-action="agent-size"]').forEach(b => b.setAttribute('aria-pressed', String(b === act))); }
