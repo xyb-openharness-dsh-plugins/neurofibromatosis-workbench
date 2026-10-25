@@ -48,3 +48,13 @@
 - 呈现格式：建档卡（分型/年龄/不可手术/既往 MEK chips + 「基因检测：未建档」如实）→ 链路条 → 结果卡（CN/EU/JP 旗帜徽标 + 登记号 + 阶段/类型 + 注册日期 + 匹配指数进度条与命中计数 + 条件三态表 + 登记原文外链）。
 - 诚实口径：匹配指数=已建档条件命中占比（非入组成功率）；库未给出的条件显示「档案未记录」；全部条目「登记状态，未核实」；年龄不符条目（KOMET 成人、MEK-NF1-104 婴幼儿）如实标「不符合」。
 - dsh/demo.js 种子适配 t.reg 字段；13 测试绿、staticPass=true；06-trials-match.png 已刷新。
+
+## 2026-10-25 六次迭代（用户提供胆道原型文件：/Users/sammini/Downloads/biliary-tract-workbench/prototypes/v0.2）
+- 临床试验页按 biliary v0.2 引擎口径重写（TRL-01~12 同构）：
+  - 档案事实卡（TRL-01）：分型/年龄/PN/不可手术性/既往MEK/基因检测/疼痛基线，逐项带日期与谁说的；没记写「未记录」。
+  - 三态改名：符合/不符合/**待确认**（原「档案未记录」并入待确认）；粗筛符合度 = 符合 ÷（符合+不符合+待确认），未知按 0 计只偏低不偏高。
+  - 分档：高度符合（≥80 且待确认≤1）/ 部分符合（≥55）/ 需补充信息 / **硬性条件不满足单列折叠**（KOMET 成人 III 期年龄硬性不符即入此组）。
+  - 卡片：登记号徽标+阶段/scope+「未核验」pill（登记库未给状态就不显示招募中）+摘要+计数 pills+条件行（✓/✕/?，"记录里是 X → 判定"）+其余 N 条折叠+动作（收藏并跟踪 / **把待确认项加进问题清单**（跳复诊准备页））。
+- 数据仍为真实登记条目（M4 sqlite 364 条快照），条件为结构化 {cat, need, actual, hard, kind}。
+- 开发版同步：schema/0002（trials 加 source_url/kind/registered/flag）、种子存结构化 cond_text(JSON)、读模型聚合修复（nctId 字段名 bug、瘤体 T-01 映射 bug，冒烟实测 5/4/3/4/4/3 条件与 6 点序列）、lib/client.js 试验段同款分档渲染 + facts 卡；全页和AI讨论/指标卡墙/一图秀一并入 0.1.3。
+- 装机实锤：宿主 21:04 重启后创建 ~/.dsh-classic/neurofibromatosis-workbench/nf-workbench.sqlite，0001+0002 迁移均应用（真目录模式不灌演示数据，表计数 0 为正确行为）。**profile 目录坑（新）**：应用已把工作台 profile 从 ~/.dsh/profiles 迁到 ~/.dsh-classic/profiles，装包前必须以运行中宿主 argv 的 profile 路径为准（旧目录被宿主重置为空壳）。

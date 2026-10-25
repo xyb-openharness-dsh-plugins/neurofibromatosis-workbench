@@ -266,27 +266,63 @@ function renderOnechart() {
     + oneChartSVG()
     + '<div>' + pinHTML() + '</div></section></div>';
 }
-function renderTrials() {
-  const hits = t => t.matchDetail.filter(x => x[2] === true).length;
-  const flagColor = { CN: '#a4561f', EU: '#2f6f8f', JP: '#22664e' };
-  return pageHead() + `
-  <div class="card" style="margin-bottom:12px"><h3>个人建档（匹配依据）</h3>
-  <div class="chips" style="margin-bottom:6px">
-    <span class="pill ok">NF1 · 丛状神经纤维瘤（记录口径）</span><span class="pill ok">9 岁</span><span class="pill ok">不可手术（记录口径）</span><span class="pill ok">既往 MEK：未使用</span><span class="pill todo">基因检测：未建档</span>
-  </div>
-  <p class="ctx">链路：个人基因/病理建档 → 搜索或 AI 协助匹配 → 自带 sqlite 试验库（nf_trials_2026.sqlite · 364 条 · 快照 2026-10-25，来源 ictrp/chinadrugtrials）+ 外部工具 → 匹配结果。基因检测未建档项如实显示，匹配指数按已建档条件计算。</p></div>
-  <p class="ctx" style="border:0;margin:0 0 10px">匹配指数 = 条件命中占比，不是入组成功率；「档案未记录」如实显示；所有条目为<b>登记状态，未核实</b>，是否参加由患者与主诊医生决定。</p>
-  ${D.trials.map(t => `<div class="card trial-card">
-    <div class="trial-top"><span class="regbadge" style="background:${flagColor[t.flag] || '#5b6470'}">${esc(t.flag)}</span><span class="regno">${esc(t.reg)}</span><span class="pill">${esc(t.phase)}</span><span class="pill">${esc(t.kind)}</span><span style="margin-left:auto;font-size:12.5px;color:var(--ink-2)">注册 ${esc(t.registered)}</span></div>
-    <p style="font-weight:600;margin:6px 0 4px">${esc(t.title)}</p>
+
+/* ---- 临床试验匹配（biliary 口径：facts 卡 + 三态待确认 + 粗筛分档 + 硬性单列） ---- */
+const STATE_NAME = { met: ['符合', 'ok'], unmet: ['不符合', 'todo'], unknown: ['待确认', ''] };
+function matchTrial(t) {
+  const evals = t.criteria.map(c => ({ c, state: c.state }));
+  const met = evals.filter(e => e.state === 'met').length;
+  const unmet = evals.filter(e => e.state === 'unmet').length;
+  const unknown = evals.filter(e => e.state === 'unknown').length;
+  const pct = Math.round(met / Math.max(1, met + unmet + unknown) * 100);
+  const hardUnmet = evals.filter(e => e.state === 'unmet' && e.c.hard);
+  const band = hardUnmet.length ? 'ineligible' : (pct >= 80 && unknown <= 1) ? 'high' : pct >= 55 ? 'partial' : 'needs_info';
+  return { t, evals, met, unmet, unknown, pct, band, hardUnmet };
+}
+const BAND = { high: ['高度符合'], partial: ['部分符合'], needs_info: ['需补充信息'], ineligible: ['硬性条件不满足'] };
+const critIcon = st => st === 'met' ? '<span class="pill ok" style="margin:0">✓</span>' : st === 'unmet' ? '<span class="pill todo" style="margin:0">✕</span>' : '<span class="pill" style="margin:0">?</span>';
+let savedTrials = {};
+function trialCard(m) {
+  const t = m.t;
+  const [bandLabel] = BAND[m.band];
+  const saved = savedTrials[t.reg];
+  const order = { unmet: 0, unknown: 1, met: 2 };
+  const sorted = [...m.evals].sort((a, b) => order[a.state] - order[b.state]);
+  const top = sorted.slice(0, 4), rest = sorted.slice(4);
+  const line = ({ c, state }) => `<div class="critline">${critIcon(state)}<span><b>${c.kind === 'exclude' ? '排除' : '入组'} · ${esc(c.cat)}</b>${c.hard ? ' <small style="color:var(--warn)">硬性</small>' : ''}：${esc(c.need)}</span><small style="color:var(--muted)">记录里是：${esc(c.actual)} → <b>${STATE_NAME[state][0]}</b></small></div>`;
+  return `<div class="card trial-card" style="margin-bottom:12px">
+    <div class="trial-top"><span class="regbadge" style="background:${{ CN: '#a4561f', EU: '#2f6f8f', JP: '#22664e' }[t.flag] || '#5b6470'}">${esc(t.flag)}</span><span class="regno">${esc(t.reg)}</span><span class="pill">${esc(t.phase)} 期</span><span class="pill">${esc(t.scope)}</span><span class="pill">${t.verified ? esc(t.verified) : '<b style="color:var(--warn)">未核验</b>'}</span></div>
+    <p style="font-weight:600;margin:6px 0 2px">${esc(t.title)}</p>
+    <p class="ctx" style="border:0;margin:2px 0;padding:0">${esc(t.registry)}</p>
     <div style="display:flex;align-items:center;gap:10px;margin:8px 0">
-      <div class="matchbar"><i style="width:${t.matchScore}%"></i></div>
-      <b style="font-size:15px;color:var(--accent)">${t.matchScore}%</b>
-      <span style="font-size:12.5px;color:var(--ink-2)">命中 ${hits(t)}/${t.matchDetail.length} 项已建档条件</span>
+      <div class="matchbar"><i style="width:${m.pct}%"></i></div>
+      <b style="font-size:15px;color:var(--accent)">${m.pct}%</b>
+      <span class="pill ${m.band === 'high' ? 'ok' : m.band === 'partial' ? '' : 'todo'}">${esc(bandLabel)}</span>
+      <span class="pill ok">符合 ${m.met}</span>${m.unmet ? `<span class="pill todo">不符合 ${m.unmet}</span>` : ''}${m.unknown ? `<span class="pill">待确认 ${m.unknown}</span>` : ''}
       <a class="text-button" href="${esc(t.url)}" target="_blank" rel="noreferrer" style="margin-left:auto">登记原文 ↗</a>
     </div>
-    <table>${t.matchDetail.map(x => `<tr><th style="width:150px">${esc(x[0])}</th><td>${esc(x[1])} ${x[2] === true ? '<span class="pill ok">命中</span>' : x[2] === false ? '<span class="pill todo">不符合</span>' : '<span class="pill">档案未记录</span>'}</td></tr>`).join('')}</table>
-  </div>`).join('')}`;
+    <div class="critlist">${top.map(line).join('')}</div>
+    ${rest.length ? `<details><summary class="text-button" style="display:inline">其余 ${rest.length} 条条件</summary><div class="critlist">${rest.map(line).join('')}</div></details>` : ''}
+    <div class="row" style="display:flex;gap:8px;margin-top:8px">
+      <button data-action="trial-save" data-id="${esc(t.reg)}">${saved ? '已收藏（在跟）' : '收藏并跟踪'}</button>
+      <button data-action="trial-ask" data-id="${esc(t.reg)}">把待确认项加进问题清单</button>
+    </div>
+    <p class="ctx">粗筛符合度 = 符合项 ÷ 已对照项（符合+不符合+待确认）。未知项按 0 计，因此只会偏低、不会偏高。这不是入组资格，也不代表效果。</p>
+  </div>`;
+}
+
+function renderTrials() {
+  const all = D.trials.map(matchTrial);
+  const fit = all.filter(m => m.band !== 'ineligible').sort((a, b2) => b2.pct - a.pct);
+  const bad = all.filter(m => m.band === 'ineligible');
+  return pageHead() + `
+  <div class="card" style="margin-bottom:12px"><h3>用来对照的档案事实（TRL-01 口径）</h3>
+  <table>${D.trialFacts.map(f => `<tr><th style="width:180px">${esc(f[0])}</th><td><b>${esc(f[1])}</b> <small style="color:var(--ink-2)">· ${esc(f[2])}</small></td></tr>`).join('')}</table>
+  <p class="ctx">每一项都来自你的记录，带日期与谁说的；没记的写「未记录」。偏好（如接受活检/安慰剂）只影响排序与提示，不改变符合判断。</p></div>
+  <p class="ctx" style="border:0;margin:0 0 10px">条目为真实<b>登记信息</b>（M4 实采 nf_trials_2026.sqlite · 364 条快照 2026-10-25）；招募状态登记库未给出，一律显示「未核验」，不显示「招募中」。是否参加由患者与主诊医生决定。</p>
+  <h3 style="font-size:13.5px">按当前记录能对上的（${fit.length}）</h3>
+  ${fit.map(trialCard).join('')}
+  ${bad.length ? `<details><summary class="text-button" style="display:inline">硬性条件不满足的 ${bad.length} 条（点开看是哪一条挡住了）</summary>${bad.map(trialCard).join('')}</details>` : ''}`;
 }
 const RENDER = { dashboard: renderDashboard, records: renderRecords, subtype: renderSubtype, calendar: renderCalendar, tumors: renderTumors, treatment: renderTreatment, genetics: renderGenetics, review: renderReview, onechart: renderOnechart, trials: renderTrials };
 
@@ -302,7 +338,7 @@ function pageContext() {
     case 'genetics': return state.privateOpen ? { ...base, 家系成员: D.genetics.members.map(m => m.rel), 问题清单数: D.genetics.questions.length } : { ...base, 家系: '私密区未展开，未携带' };
     case 'review': return { ...base, 复诊要点: D.reviewNotes, 家系: state.privateOpen ? '已展开（携带）' : '私密区未展开，未携带' };
     case 'onechart': return { ...base, 已选指标: state.chartSel.map(id => { const m = D.metricSeries.find(x => x.id === id); return m ? m.name + ' 最近 ' + (metricData(m).at(-1) || [])[2] + (m.unit || '') : id; }), 范围: state.range };
-    case 'trials': return { ...base, 档案摘要: { 分型: D.subtype.type, 年龄: 9, PN: '有（记录口径）', 既往MEK: '未使用', 基因检测: '未建档' }, 匹配条目: D.trials.map(t => t.reg + ' 命中 ' + t.matchDetail.filter(x => x[2] === true).length + '/' + t.matchDetail.length), 库快照: 'nf_trials_2026.sqlite · 364 条 · 2026-10-25' };
+    case 'trials': return { ...base, 档案事实: D.trialFacts.map(f => f[0] + '=' + f[1]), 分档: '高度/部分/需补充/硬性不满足', 库快照: 'nf_trials_2026.sqlite · 364 条 · 2026-10-25' };
     default: return base;
   }
 }
@@ -352,6 +388,13 @@ document.addEventListener('click', (e) => {
   else if (act.dataset.toggle) { const k = act.dataset.toggle; state.toggles[k] = !state.toggles[k]; render(); }
   else if (act.dataset.pin) { state.pin = act.dataset.pin; render(); }
   else if (a === 'unpin') { state.pin = null; render(); }
+  else if (a === 'trial-save') { const id = act.dataset.id; savedTrials[id] = !savedTrials[id]; render(); }
+  else if (a === 'trial-ask') {
+    const t = D.trials.find(x => x.reg === act.dataset.id);
+    const unknowns = t.criteria.filter(c => c.state === 'unknown').map(c => c.cat + '：' + c.need + '（' + t.reg + '）');
+    D.reviewNotes.push('待确认（' + t.reg + '）-- ' + unknowns.join('；'));
+    state.view = 'review'; render();
+  }
   else if (a === 'discuss') {
     const dock = $('#agent-dock');
     if (dock.hidden) { dock.hidden = false; $('#agent-toggle').setAttribute('aria-expanded', 'true'); $('#agent-state').textContent = '面板已打开'; }

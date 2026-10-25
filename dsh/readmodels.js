@@ -57,12 +57,12 @@ export function readWorkbench(db, { profileKey = 'demo', geneticsOpen = false } 
 
   const reviewNotes = db.prepare('SELECT kind, note FROM review_notes WHERE profile_key = ? ORDER BY ord, rowid').all(profileKey);
 
-  const trials = db.prepare('SELECT t.nct_id, t.title, t.phase, t.status_text, m.cond_text, m.cond_state FROM trial_matches m JOIN trials t ON t.id = m.trial_id WHERE m.profile_key = ? ORDER BY m.rowid').all(profileKey)
+  const trials = db.prepare('SELECT t.nct_id, t.title, t.phase, t.status_text, t.source_url, t.kind, t.registered, t.flag, m.cond_text, m.cond_state FROM trial_matches m JOIN trials t ON t.id = m.trial_id WHERE m.profile_key = ? ORDER BY m.rowid').all(profileKey)
     .reduce((acc, r) => {
-      const found = acc.find((x) => x.nct_id === r.nct_id);
+      const found = acc.find((x) => x.nctId === r.nct_id);
       const cond = { text: r.cond_text, state: r.cond_state };
       if (found) found.conditions.push(cond);
-      else acc.push({ nctId: r.nct_id, title: r.title, phase: r.phase, status: r.status_text, conditions: [cond] });
+      else acc.push({ nctId: r.nct_id, title: r.title, phase: r.phase, status: r.status_text, sourceUrl: r.source_url, kind: r.kind, registered: r.registered, flag: r.flag, conditions: [cond] });
       return acc;
     }, []);
 

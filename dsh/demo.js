@@ -33,10 +33,10 @@ export function seedDemo(db) {
     const unit = m.unit
     ins(`INSERT INTO metrics (key, group_title, name, unit, kind, band_low, band_high, source_title, source_version, in_use)
       VALUES (?,?,?,?,?,NULL,NULL,?,?,1)`, m.id, m.group, m.name, unit, 'numeric', m.source, '2025')
-    const t = m.id && m.id.startsWith('tumor-') ? d.tumors.find(x => x.id.toUpperCase() === ('T-' + m.id.slice(6))) : null; const series = m.series ?? (t ? t.series : [])
+    const t = m.id && m.id.startsWith('tumor-') ? d.tumors.find(x => x.id === m.id.replace('tumor-t', 'T-')) : null; const series = m.series ?? (t ? t.series : [])
     for (const [y, mo, v] of series) {
       ins(`INSERT INTO metric_points (profile_key, metric_key, taken_at, value_num, value_text, tumor_no, note) VALUES (?,?,?,?,NULL,?,NULL)`,
-        pk, m.id, `${y}-${String(mo).padStart(2, '0')}-15`, v, m.id.startsWith('tumor') ? m.id.replace('tumor-', '') : null)
+        pk, m.id, `${y}-${String(mo).padStart(2, '0')}-15`, v, m.id.startsWith('tumor') ? m.id.replace('tumor-t', 'T-').toUpperCase() : null)
     }
   }
 
@@ -57,11 +57,11 @@ export function seedDemo(db) {
 
   for (const [i, n] of d.reviewNotes.entries()) ins(`INSERT INTO review_notes (profile_key, kind, note, ord) VALUES (?,?,?,?)`, pk, 'change', n, i)
 
-  // 临床研究演示条目（trial_matches：cond_state hit/miss/unknown 如实记录）
+  // 临床研究条目（真实登记，M4 实采；trial_matches.cond_text 存 JSON{cat,need,actual}，cond_state hit/miss/unknown 三态）
   for (const t of d.trials) {
-    const r = ins(`INSERT INTO trials (nct_id, title, phase, status_text, fetched_at) VALUES (?,?,?,?,?)`, t.reg ?? t.nct, t.title, t.phase, t.status ?? '登记状态，未核实', '2026-10-25')
-    for (const [cond, val, st] of t.matchDetail) {
-      ins(`INSERT INTO trial_matches (profile_key, trial_id, cond_text, cond_state) VALUES (?,?,?,?)`, pk, Number(r.lastInsertRowid), `${cond}：${val}`, st === true ? 'hit' : st === false ? 'miss' : 'unknown')
+    const r = ins(`INSERT INTO trials (nct_id, title, phase, status_text, fetched_at, source_url, kind, registered, flag) VALUES (?,?,?,?,?,?,?,?,?)`, t.reg ?? t.nct, t.title, t.phase, '登记状态，未核实', '2026-10-25', t.url ?? null, t.scope ?? t.kind ?? null, t.verified && !String(t.verified).includes('未核验') ? t.verified : null, t.flag ?? null)
+    for (const c of t.criteria ?? []) {
+      ins(`INSERT INTO trial_matches (profile_key, trial_id, cond_text, cond_state) VALUES (?,?,?,?)`, pk, Number(r.lastInsertRowid), JSON.stringify({ cat: c.cat, need: c.need, actual: c.actual, hard: !!c.hard, kind: c.kind ?? 'include' }), c.state === 'met' ? 'hit' : c.state === 'unmet' ? 'miss' : 'unknown')
     }
   }
   return d

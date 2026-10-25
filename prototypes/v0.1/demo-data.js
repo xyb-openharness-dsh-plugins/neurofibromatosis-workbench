@@ -70,18 +70,57 @@ window.NF_DEMO = {
     '待问医生：背部新发皮下结节数量是否需要记录进档案；脊柱侧弯随访时间。',
     '带材料：最近两次 MRI 报告、生长曲线、血压记录表。'
   ],
+  trialFacts: [
+    ['分型', 'NF1（就诊记录口径）', '2026-10-02 · 门诊'],
+    ['年龄', '9 岁', '档案登记'],
+    ['丛状神经纤维瘤（PN）', '有（左颈部 T-01，记录口径）', '2026-09 MRI 报告'],
+    ['不可手术性', '无法手术（记录口径）', '2026-10-02 · 门诊'],
+    ['既往 MEK 抑制剂', '未使用', '用药线记录'],
+    ['基因检测', '未建档', '未检测的位点不显示为阴性'],
+    ['疼痛基线（NRS）', '5 分（最近一次）', '2026-10 记录']
+  ],
+  trialProfilePrefs: { biopsy: true, placebo: false },
   trials: [
-    { reg: 'CTR20200357', registry: '中国药物临床试验登记', flag: 'CN', title: 'selumetinib（司美替尼）治疗神经纤维瘤病的1期研究', phase: 'I 期', kind: '干预性', registered: '未核实', url: 'https://www.chinadrugtrials.org.cn/clinicaltrials.searchlistdetail.dhtml',
-      matchScore: 75, matchDetail: [['诊断类型', 'NF1', true], ['丛状神经纤维瘤（PN）', '有（记录口径）', true], ['既往 MEK 抑制剂', '未使用', true], ['年龄/入组状态', '登记库未给出', null]] },
-    { reg: 'CTR20202330', registry: '中国药物临床试验登记', flag: 'CN', title: 'FCN-159 片（国产 MEK 抑制剂）在1型神经纤维瘤病患者中的I/II期临床试验', phase: 'I/II 期', kind: '干预性', registered: '未核实', url: 'https://www.chinadrugtrials.org.cn/clinicaltrials.searchlistdetail.dhtml',
-      matchScore: 50, matchDetail: [['诊断类型', 'NF1', true], ['既往 MEK 抑制剂', '未使用', true], ['瘤体类型', '登记库未给出', null], ['年龄', '登记库未给出', null]] },
-    { reg: 'ChiCTR2000036770', registry: 'ChiCTR（中国临床试验注册中心）', flag: 'CN', title: '基于液体活检外泌体建立司美替尼治疗丛状神经纤维瘤的预测模型（观察性）', phase: '观察性', kind: '观察性研究', registered: '2020-08-25', url: 'https://trialsearch.who.int/Trial2.aspx?TrialID=ChiCTR2000036770',
-      matchScore: 50, matchDetail: [['诊断类型', 'NF1 · 丛状神经纤维瘤', true], ['拟行司美替尼治疗', '未开始（记录口径）', true], ['液体活检标本', '档案未记录', null], ['年龄', '登记库未给出', null]] },
-    { reg: 'CTIS2023-507336-20-00', registry: 'EU CTIS（欧盟）', flag: 'EU', title: 'KOMET：司美替尼治疗成人症状性不可手术丛状神经纤维瘤 NF1 的 III 期随机双盲安慰剂对照研究', phase: 'III 期', kind: '干预性', registered: '2024-04-11', url: 'https://trialsearch.who.int/Trial2.aspx?TrialID=CTIS2023-507336-20-00',
-      matchScore: 50, matchDetail: [['诊断类型', 'NF1 · 丛状神经纤维瘤', true], ['既往 MEK 抑制剂', '未使用', true], ['年龄', '成人（本档案 9 岁）', false], ['不可手术', '记录口径相符', true]] },
-    { reg: 'JPRN-jRCT2041210036', registry: 'jRCT（日本）', flag: 'JP', title: 'KOMET：司美替尼治疗症状性不可手术丛状神经纤维瘤 NF1 的全球有效性研究', phase: 'III 期', kind: '干预性', registered: '2021-06-24', url: 'https://trialsearch.who.int/Trial2.aspx?TrialID=JPRN-jRCT2041210036',
-      matchScore: 50, matchDetail: [['诊断类型', 'NF1 · 丛状神经纤维瘤', true], ['症状性不可手术', '记录口径相符', true], ['年龄', '登记库未给出', null], ['既往 MEK 抑制剂', '未使用', true]] },
-    { reg: 'CTIS2025-522000-24-00', registry: 'EU CTIS（欧盟）', flag: 'EU', title: 'MEK-NF1-104：Mirdametinib 治疗婴幼儿 NF1 相关丛状神经纤维瘤的 1B 期开放标签研究', phase: '1B 期', kind: '干预性', registered: '2025-08-11', url: 'https://trialsearch.who.int/Trial2.aspx?TrialID=CTIS2025-522000-24-00',
-      matchScore: 25, matchDetail: [['诊断类型', 'NF1 · 丛状神经纤维瘤', true], ['年龄', '婴幼儿（本档案 9 岁）', false], ['既往 MEK 抑制剂', '未使用', true], ['营养/喂养评估', '不适用', null]] }
+    { reg: 'CTR20200357', registry: '中国药物临床试验登记与信息公示平台', flag: 'CN', title: 'selumetinib（司美替尼）治疗神经纤维瘤病的1期研究', phase: 'I', scope: 'NF1 · PN', status: 'unknown', verified: null, summary: '在中国 NF1 患者中评价司美替尼的药代动力学与安全性；登记库未给出招募状态。', url: 'https://www.chinadrugtrials.org.cn/clinicaltrials.searchlistdetail.dhtml',
+      criteria: [
+        { cat: '诊断', kind: 'include', hard: true, need: '1 型神经纤维瘤病（NF1）', actual: 'NF1（就诊记录口径）', state: 'met' },
+        { cat: '瘤体类型', kind: 'include', hard: true, need: '丛状神经纤维瘤（PN）', actual: '左颈部 T-01（MRI 报告）', state: 'met' },
+        { cat: '既往治疗', kind: 'include', need: '既往未使用 MEK 抑制剂', actual: '未使用（用药线记录）', state: 'met' },
+        { cat: '年龄', kind: 'include', hard: true, need: '登记库未给出', actual: '9 岁', state: 'unknown' },
+        { cat: '器官功能', kind: 'include', need: '肝肾功能常规要求', actual: '未记录', state: 'unknown' }
+      ] },
+    { reg: 'CTR20202330', registry: '中国药物临床试验登记与信息公示平台', flag: 'CN', title: 'FCN-159 片（国产 MEK 抑制剂）在1型神经纤维瘤病患者中的I/II期临床试验', phase: 'I/II', scope: 'NF1', status: 'unknown', verified: null, summary: '国产 MEK 抑制剂在 NF1 患者中的 I/II 期研究；登记库未给出招募状态与瘤体类型要求。', url: 'https://www.chinadrugtrials.org.cn/clinicaltrials.searchlistdetail.dhtml',
+      criteria: [
+        { cat: '诊断', kind: 'include', hard: true, need: '1 型神经纤维瘤病（NF1）', actual: 'NF1（就诊记录口径）', state: 'met' },
+        { cat: '既往治疗', kind: 'include', need: '既往未使用 MEK 抑制剂', actual: '未使用（用药线记录）', state: 'met' },
+        { cat: '瘤体类型', kind: 'include', need: '登记库未给出', actual: 'T-01 丛状 / T-02、T-03 皮下', state: 'unknown' },
+        { cat: '年龄', kind: 'include', need: '登记库未给出', actual: '9 岁', state: 'unknown' }
+      ] },
+    { reg: 'ChiCTR2000036770', registry: 'ChiCTR（中国临床试验注册中心）', flag: 'CN', title: '基于液体活检外泌体建立司美替尼治疗丛状神经纤维瘤的预测模型', phase: '—', scope: 'NF1 · PN · 观察性', status: 'unknown', verified: '2020-08-25 注册', summary: '观察性研究：收集拟行司美替尼治疗的 PN 患者液体活检标本，建立疗效预测模型。', url: 'https://trialsearch.who.int/Trial2.aspx?TrialID=ChiCTR2000036770',
+      criteria: [
+        { cat: '诊断', kind: 'include', hard: true, need: '丛状神经纤维瘤，拟行司美替尼治疗', actual: 'NF1 · PN，尚未开始 MEK（记录口径）', state: 'met' },
+        { cat: '标本', kind: 'include', hard: true, need: '可提供液体活检（外周血）标本', actual: '未记录', state: 'unknown' },
+        { cat: '年龄', kind: 'include', need: '登记库未给出', actual: '9 岁', state: 'unknown' }
+      ] },
+    { reg: 'CTIS2023-507336-20-00', registry: 'EU CTIS（欧盟临床试验信息系统）', flag: 'EU', title: 'KOMET：司美替尼治疗成人症状性不可手术丛状神经纤维瘤 NF1 的 III 期随机双盲安慰剂对照研究', phase: 'III', scope: 'NF1 · PN · 成人', status: 'unknown', verified: '2024-04-11 注册', summary: '全球多中心 III 期；含安慰剂对照 arm。年龄为硬性排除项。', url: 'https://trialsearch.who.int/Trial2.aspx?TrialID=CTIS2023-507336-20-00',
+      criteria: [
+        { cat: '诊断', kind: 'include', hard: true, need: 'NF1 · 症状性不可手术 PN', actual: '相符（记录口径）', state: 'met' },
+        { cat: '年龄', kind: 'include', hard: true, need: '成人（≥18 岁）', actual: '9 岁', state: 'unmet' },
+        { cat: '既往治疗', kind: 'include', need: '既往未使用 MEK 抑制剂', actual: '未使用（用药线记录）', state: 'met' },
+        { cat: '设计', kind: 'exclude', need: '含安慰剂对照 arm', actual: '偏好：不接受安慰剂（可再商量）', state: 'met' }
+      ] },
+    { reg: 'JPRN-jRCT2041210036', registry: 'jRCT（日本）', flag: 'JP', title: 'KOMET：司美替尼治疗症状性不可手术丛状神经纤维瘤 NF1 的全球有效性研究', phase: 'III', scope: 'NF1 · PN', status: 'unknown', verified: '2021-06-24 注册', summary: 'KOMET 研究日本中心部分；登记库未给出年龄下限。', url: 'https://trialsearch.who.int/Trial2.aspx?TrialID=JPRN-jRCT2041210036',
+      criteria: [
+        { cat: '诊断', kind: 'include', hard: true, need: 'NF1 · 症状性不可手术 PN', actual: '相符（记录口径）', state: 'met' },
+        { cat: '既往治疗', kind: 'include', need: '既往未使用 MEK 抑制剂', actual: '未使用（用药线记录）', state: 'met' },
+        { cat: '年龄', kind: 'include', need: '登记库未给出', actual: '9 岁', state: 'unknown' },
+        { cat: '地区', kind: 'include', need: '日本中心', actual: '可去中心待确认', state: 'unknown' }
+      ] },
+    { reg: 'CTIS2025-522000-24-00', registry: 'EU CTIS（欧盟临床试验信息系统）', flag: 'EU', title: 'MEK-NF1-104：Mirdametinib 治疗婴幼儿 NF1 相关丛状神经纤维瘤的 1B 期开放标签研究', phase: '1B', scope: 'NF1 · PN · 婴幼儿', status: 'unknown', verified: '2025-08-11 注册', summary: '针对婴幼儿（含 3 岁以下）的药代与安全性研究；年龄为硬性排除项。', url: 'https://trialsearch.who.int/Trial2.aspx?TrialID=CTIS2025-522000-24-00',
+      criteria: [
+        { cat: '诊断', kind: 'include', hard: true, need: 'NF1 相关 PN', actual: '相符（记录口径）', state: 'met' },
+        { cat: '年龄', kind: 'include', hard: true, need: '婴幼儿（约 1 月–<10 岁，以方案为准）', actual: '9 岁（临界，需人工核对）', state: 'unknown' },
+        { cat: '营养', kind: 'include', need: '可吞咽制剂/喂养评估', actual: '未记录', state: 'unknown' }
+      ] }
   ]
 };
