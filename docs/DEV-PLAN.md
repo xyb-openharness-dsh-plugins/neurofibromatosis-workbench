@@ -21,3 +21,9 @@
 - 2026-10-25 M0 完成；开工前一轮提问（服务主体/病程/MinerU/品牌）用户未应答，按推荐项执行（DEV-REQUIREMENTS §五）。G1 起各闸口若仍无应答，同样按推荐项继续并逐条留痕"签认待补"。
 
 - G2 ✅ 2026-10-25：用户确认原型定稿（六轮返工后，原话见 PROTOTYPE-REVIEW 用户确认节）。
+
+## 2026-10-26 安装位置纠错（用户反馈：安装位置错误导致 DSH 崩溃）
+- 0.1.2–0.1.4 三轮装错位置：装进了 DeepSeek Harness（Agent 宿主）的 `~/.dsh-classic/profiles/desktop`（因宿主 argv 指向那里），工作台 bundle 应装 **DSH Desktop.app** 的 `~/Library/Application Support/dsh-desktop/harness/profiles/web`。
+- 已纠正：classic 目录移除登记并 pnpm 清理、误建数据目录删除；0.1.4 按本地惯例（tggz 拷入 profile 目录 + file: 依赖 + bundles 登记）装入 web profile；DSH Desktop 06:04 重启无崩溃，node_modules 链接 0.1.4 就位。
+- starter LESSONS 反向条目已修正（147fe6b 的错误方向 → d1c31c6）。
+- 界面加载：待用户在 DSH Desktop 打开小纤宝确认（web profile 与 CML/发作性睡病/CLL 兄弟工作台同列）。
