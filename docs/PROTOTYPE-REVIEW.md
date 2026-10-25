@@ -58,3 +58,8 @@
 - 数据仍为真实登记条目（M4 sqlite 364 条快照），条件为结构化 {cat, need, actual, hard, kind}。
 - 开发版同步：schema/0002（trials 加 source_url/kind/registered/flag）、种子存结构化 cond_text(JSON)、读模型聚合修复（nctId 字段名 bug、瘤体 T-01 映射 bug，冒烟实测 5/4/3/4/4/3 条件与 6 点序列）、lib/client.js 试验段同款分档渲染 + facts 卡；全页和AI讨论/指标卡墙/一图秀一并入 0.1.3。
 - 装机实锤：宿主 21:04 重启后创建 ~/.dsh-classic/neurofibromatosis-workbench/nf-workbench.sqlite，0001+0002 迁移均应用（真目录模式不灌演示数据，表计数 0 为正确行为）。**profile 目录坑（新）**：应用已把工作台 profile 从 ~/.dsh/profiles 迁到 ~/.dsh-classic/profiles，装包前必须以运行中宿主 argv 的 profile 路径为准（旧目录被宿主重置为空壳）。
+
+## 用户确认（2026-10-25）
+
+- 用户逐轮确认六次迭代的最终形态（原话「好很多」「这个也可以」「确认」），覆盖：指标卡墙（breast 口径）、一图秀左栏（动态切换）、临床试验（胆道引擎口径 + 真实登记条目）、全页「和AI讨论 ↗」携带、卡面减负与折线图去背景。
+- **G2 原型基准就此签认**（prototypes/v0.1 为视觉基准，后续 parity 以此为准）。
