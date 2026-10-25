@@ -31,9 +31,9 @@ function openStore(config) {
   return db
 }
 
-export function apply(ctx) {
+export function apply(ctx, config = {}) {
   if (!ctx.webServer?.register) throw new Error('Desktop webServer.register is unavailable')
-  const db = openStore(ctx.config)
+  const db = openStore(config)
   ctx.effect(() => { close(db) }, 'nf store')
 
   const json = (res, status, body) => {
