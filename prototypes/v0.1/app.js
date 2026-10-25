@@ -16,7 +16,10 @@ const SUBTITLES = {
   review: '间隔期变化 + 要问的问题', onechart: '选指标 · 一张图看趋势', trials: '建档 → 匹配 → 结果（匹配指数）'
 };
 
-const state = { view: 'dashboard', flipped: {}, fold: { ageBands: ['child'], lines: ['TL-1'] }, chartSel: ['pain', 'tumor-t01'], bigfont: false, privateOpen: false };
+const state = { view: 'dashboard', flipped: {}, fold: { ageBands: ['child'], lines: ['TL-1'] }, chartSel: ['pain', 'tumor-t01'], range: 'all', toggles: { treatment: true, keypoints: true, changes: true }, pin: null, bigfont: false, privateOpen: false };
+const METRIC_COLOR = (m) => m.color || '#2f6f8f';
+const toPts = (arr) => (arr || []).map(([y, mo, v]) => ({ d: y + '-' + String(mo).padStart(2, '0') + '-15', v }));
+const longDate = (d) => { const [y, m] = d.split('-'); return y + '.' + Number(m); };
 
 /* ---- 私密三出口：渲染 / 导出（复诊成稿）/ Agent 草稿，统一走同一过滤 ---- */
 function privateData() { return state.privateOpen ? D.genetics.members : null; }
@@ -110,16 +113,8 @@ function renderTumors() {
   ${D.tumors.map(t => `<tr><td>${esc(t.id)}</td><td>${esc(t.site)}</td><td>${esc(t.method)}</td><td>${t.series.at(-1)[2]} mm（${t.series.at(-1)[0]}-${t.series.at(-1)[1]}）</td></tr>`).join('')}</table>
   <p style="margin:10px 0 0">${chartSVG([{ name: 'T-01 左颈部长径 (mm)', data: D.tumors[0].series }, { name: 'T-02 右前臂 (mm)', data: D.tumors[1].series }])}</p>
   <p class="ctx">趋势仅展示测量值序列；不做良恶性或生长速度判读。</p></div>
-  <h3 style="font-size:13.5px;color:var(--ink-2)">指标系列卡（点击卡片 3D 翻转看背面）</h3>
-  ${groups.map(g => `<div class="series-group"><h3>${esc(g)}</h3><div class="flip-grid">${
-    D.metricSeries.filter(m => m.group === g).map(m => {
-      const data = metricData(m); const last = data.at(-1);
-      const recent = data.slice(-3).map(p => `${p[0]}-${p[1]}：${p[2]}`).join('<br>') || '（无记录）';
-      return `<div class="flip ${state.flipped[m.id] ? 'flipped' : ''}" data-flip="${m.id}" tabindex="0" role="button" aria-pressed="${!!state.flipped[m.id]}" aria-label="${esc(m.name)}，点击翻转">
-        <div class="flip-face"><span class="flip-name">${esc(m.name)}</span><span class="flip-value">${last ? last[2] : '—'} <small>${esc(m.unit)}</small></span><div class="flip-mini">${sparkline(data)}</div><button class="flip-hint">翻到背面 ↻</button></div>
-        <div class="flip-face flip-back"><span class="flip-name">最近记录</span><p style="font-size:12.5px;margin:4px 0">${recent}</p><p class="ctx" style="border:0;margin:2px 0;padding:0">来源：${esc(m.source)}</p><button class="flip-hint">翻回正面 ↺</button></div>
-      </div>`;
-    }).join('')}</div></div>`).join('')}`;
+  <h3 style="font-size:13.5px;color:var(--ink-2)">指标系列卡（点击原位 3D 翻转看最近记录与趋势）</h3>
+  ${groups.map(g => { const ms = D.metricSeries.filter(m => m.group === g); return `<div class="series-group"><h3>${esc(g)} <small style="font-weight:400">${ms.length} 项</small></h3><div class="mgrid">${ms.map(m => mcard(m)).join('')}</div></div>`; }).join('')}`;
 }
 function renderTreatment() {
   return pageHead() + D.treatmentLines.map(t => `
@@ -148,11 +143,130 @@ function renderReview() {
   <div class="card"><h3>成稿预览（导出出口）</h3><pre style="white-space:pre-wrap;font-size:12.5px">${esc(exportText)}</pre>
   <div class="row"><button data-action="copy" data-text="${esc(exportText)}">复制成稿</button><button class="primary" data-action="agent-draft" style="border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:8px;padding:6px 12px">AI 草稿（携带上下文）</button></div></div></div>`;
 }
+/* ---- 指标卡（breast 口径：固定尺寸原位翻转；正面当前值+较前次，背面 sparkline+端日期） ---- */
+function sparkPts(pts, color) {
+  const w = 200, h = 56, pad = 8;
+  const vals = pts.map(x => x.v); const lo = Math.min(...vals), hi = Math.max(...vals);
+  const span = hi - lo || Math.max(Math.abs(hi) * .08, 1);
+  const coords = pts.map((x, i) => ({ x: pad + i * (w - pad * 2) / Math.max(pts.length - 1, 1), y: h - 12 - (x.v - lo) / span * (h - 24) }));
+  const path = pts.length > 1 ? smoothPath(coords.map(c => [c.x, c.y])) : '';
+  const first = coords[0], last = coords[coords.length - 1];
+  return '<svg class="chart" viewBox="0 0 ' + w + ' ' + h + '" style="height:56px;border:0" role="img" aria-label="最近 ' + pts.length + ' 次记录折线，两端标注数值">'
+    + (path ? '<path class="curve" d="' + path + '" stroke="' + color + '" style="stroke-width:1.8"/>' : '')
+    + coords.map((c, i) => '<circle class="dot" cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) + '" r="' + (i === coords.length - 1 || i === 0 ? 3.4 : 2.4) + '" fill="' + color + '"/>').join('')
+    + '<text x="' + Math.max(first.x, 18).toFixed(1) + '" y="' + Math.max(first.y - 8, 10).toFixed(1) + '" text-anchor="middle" fill="' + color + '" style="font-weight:600">' + pts[0].v + '</text>'
+    + '<text x="' + Math.min(last.x, w - 22).toFixed(1) + '" y="' + Math.max(last.y - 8, 10).toFixed(1) + '" text-anchor="middle" fill="' + color + '" style="font-weight:600">' + pts[pts.length - 1].v + '</text></svg>';
+}
+function mcard(m) {
+  const pts = toPts(metricData(m)); const last = pts[pts.length - 1], prev = pts[pts.length - 2];
+  const flipped = !!state.flipped[m.id];
+  const color = METRIC_COLOR(m);
+  const delta = prev ? ('较前次 ' + (last.v > prev.v ? '↑' : last.v < prev.v ? '↓' : '→') + ' <em>' + Math.abs(last.v - prev.v) + ' ' + esc(m.unit || '') + '</em>') : '首次记录';
+  const cat = esc(m.group.replace('系列', ''));
+  const front = '<span class="mcat"><i style="background:' + color + '"></i>' + cat + '</span>'
+    + '<span class="mname">' + esc(m.name) + '</span>'
+    + '<span class="mval">' + (last ? last.v : '—') + '<small>' + esc(m.unit || '') + '</small></span>'
+    + '<span class="mdelta">' + delta + '</span>'
+    + '<span class="mrec">共 ' + pts.length + ' 次记录' + (pts.length > 1 ? ' · 点击翻转看趋势' : '') + '</span>'
+    + '<span class="mmeta"><span>' + (last ? longDate(last.d) : '—') + ' · ' + esc(m.source) + '</span><span class="hint">翻转 ↗</span></span>';
+  const back = pts.length > 1
+    ? '<span class="mcat"><i style="background:' + color + '"></i>' + cat + '</span>'
+      + '<span class="mname">' + esc(m.name) + ' · 最近 ' + pts.length + ' 次</span>'
+      + sparkPts(pts, color)
+      + '<span class="msp-labels"><span>' + longDate(pts[0].d) + '</span><span>' + longDate(last.d) + '</span></span>'
+      + '<span class="mfoot">仅回顾已记录值 · 点击返回</span>'
+    : '<span class="mcat"><i style="background:' + color + '"></i>' + cat + '</span>'
+      + '<span class="mname">' + esc(m.name) + '</span>'
+      + '<span class="mna">只有 ' + pts.length + ' 次记录，暂不连线。<br>再记录一次后显示趋势。</span>'
+      + '<span class="mfoot">点击返回</span>';
+  return '<button class="mcard" data-flip="' + m.id + '" aria-pressed="' + flipped + '" aria-label="' + esc(m.name) + '，' + (last ? last.v + (m.unit || '') : '无记录') + '；点击翻转">'
+    + '<span class="mcard-inner' + (flipped ? ' flipped' : '') + '">'
+    + '<span class="mface front">' + front + '</span>'
+    + '<span class="mface back">' + back + '</span>'
+    + '</span></button>';
+}
+
+/* ---- 一图秀（breast 口径：左栏筛选即时更新 + 每线按自身范围缩放 + 图例/pin/开关） ---- */
+function chartDomain() {
+  const all = D.metricSeries.flatMap(m => toPts(metricData(m))).map(x => Date.parse(x.d));
+  if (state.range === '3m') return [Date.now() - 92 * 864e5, Date.now()];
+  if (state.range === '6m') return [Date.now() - 183 * 864e5, Date.now()];
+  if (state.range === '12m') return [Date.now() - 365 * 864e5, Date.now()];
+  return [Math.min(...all), Math.max(...all, Date.now())];
+}
+function oneChartSVG() {
+  const w = 640, h = 250, pad = { l: 16, r: 16, t: 20, b: 36 };
+  const dom = chartDomain(); const t0 = dom[0], t1 = dom[1];
+  const X = d => pad.l + (Date.parse(d) - t0) / Math.max(t1 - t0, 1) * (w - pad.l - pad.r);
+  const series = state.chartSel.map(id => { const m = D.metricSeries.find(x => x.id === id); const all = toPts(metricData(m)); const pts = all.filter(x => Date.parse(x.d) >= t0 && Date.parse(x.d) <= t1); return { m, all, pts }; }).filter(x => x.pts.length);
+  if (!series.length) return '<div class="card"><h3>这个时间窗里没有所选指标</h3><p class="ctx">扩大时间范围，或在左侧加选一个指标。</p></div>';
+  let out = '';
+  for (let i = 0; i <= 3; i++) { const y = pad.t + i * (h - pad.t - pad.b) / 3; out += '<line x1="' + pad.l + '" x2="' + (w - pad.r) + '" y1="' + y + '" y2="' + y + '" stroke="var(--line)"/>'; }
+  if (state.toggles.treatment) {
+    const tl = D.treatmentLines.find(l => l.rows.some(r => r[0] === '开始' && r[1]));
+    if (tl) { const st = tl.rows.find(r => r[0] === '开始')[1]; const x1 = Math.max(X(st + '-01'), pad.l);
+      out += '<rect x="' + x1.toFixed(1) + '" y="' + (pad.t - 8) + '" width="' + (w - pad.r - x1).toFixed(1) + '" height="5" rx="2.5" fill="#22664e" opacity=".22"/>'
+           + '<text x="' + (x1 + 3).toFixed(1) + '" y="' + (pad.t - 11) + '" fill="#22664e" font-size="10">' + esc(tl.title.replace('（当前）', '').replace('（未开始）', '')) + '</text>'; }
+  }
+  series.forEach((sr, si) => {
+    const color = METRIC_COLOR(sr.m);
+    const vals = sr.all.map(x => x.v);
+    const lo = Math.min(...vals), hi = Math.max(...vals), span = hi - lo || Math.max(Math.abs(hi) * .08, 1);
+    const Y = v => h - pad.b - (v - lo) / span * (h - pad.t - pad.b);
+    const coords = sr.pts.map(x => ({ x: X(x.d), y: Y(x.v) }));
+    out += '<path class="curve" d="' + smoothPath(coords.map(o => [o.x, o.y])) + '" stroke="' + color + '"/>';
+    coords.forEach((c, i) => {
+      const pt = sr.pts[i], prev = sr.pts[i - 1]; const isLast = i === sr.pts.length - 1;
+      let tag = '';
+      if (prev && state.toggles.changes && Math.abs((pt.v - prev.v) / Math.max(Math.abs(prev.v), 1)) >= .2) {
+        const pct = Math.round((pt.v - prev.v) / Math.abs(prev.v) * 100);
+        tag += '<text x="' + (c.x + 7).toFixed(1) + '" y="' + (c.y - 8 - (si % 3) * 12).toFixed(1) + '" fill="' + color + '" font-size="10.5">' + (pct > 0 ? '+' : '') + pct + '%</text>';
+      }
+      if (isLast && state.toggles.keypoints) tag += '<text x="' + (c.x - 5).toFixed(1) + '" y="' + (c.y - 10 - (si % 3) * 13).toFixed(1) + '" text-anchor="end" fill="' + color + '" font-size="11" style="font-weight:600">' + pt.v + '</text>';
+      out += '<circle class="dot" data-action="pin" data-pin="' + sr.m.id + '|' + pt.d + '" cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) + '" r="' + (isLast ? 5 : 4) + '" fill="' + color + '" style="cursor:pointer"><title>' + esc(sr.m.name) + ' ' + pt.v + ' ' + esc(sr.m.unit || '') + ' · ' + pt.d + '</title></circle>' + tag;
+    });
+  });
+  const months = []; const cur = new Date(t0); cur.setDate(1);
+  while (cur.getTime() <= t1) { if (cur.getTime() >= t0) months.push({ x: X(cur.toISOString().slice(0, 10)), l: (cur.getMonth() + 1) + '月' }); cur.setMonth(cur.getMonth() + 1); }
+  out += months.filter((x, i) => months.length > 8 ? i % 2 === 0 : true).map(x => '<text x="' + x.x.toFixed(1) + '" y="' + (h - 14) + '" text-anchor="middle" font-size="10.5">' + x.l + '</text>').join('');
+  return '<svg class="chart" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="已选指标趋势；每条线按自身范围绘制，点选可查看数值与来源">' + out
+    + '<text x="' + pad.l + '" y="' + (h - 2) + '" font-size="10.5">↑ 每条线按该指标全部记录范围缩放，不代表不同指标数值可比</text></svg>';
+}
+function oneLegend() {
+  return D.metricSeries.filter(m => state.chartSel.includes(m.id) && metricData(m).length).map(m => {
+    const vals = toPts(metricData(m)).map(x => x.v);
+    return '<span><i style="background:' + METRIC_COLOR(m) + '"></i><b>' + esc(m.name) + '</b> ' + vals[vals.length - 1] + ' ' + esc(m.unit || '') + '<span class="range">全期 ' + Math.min(...vals) + '–' + Math.max(...vals) + '</span></span>';
+  }).join('');
+}
+function pinHTML() {
+  if (!state.pin) return '<p class="ctx">点击曲线上的记录点，可查看数值、日期与来源。</p>';
+  const parts = state.pin.split('|'); const m = D.metricSeries.find(x => x.id === parts[0]);
+  const pt = toPts(metricData(m)).find(x => x.d === parts[1]);
+  if (!pt) return '<p class="ctx">这个记录点已不在当前时间窗内。</p>';
+  return '<div class="pinbox"><div><b>' + esc(m.name) + ' ' + pt.v + ' ' + esc(m.unit || '') + '</b>'
+    + '<p class="ctx" style="border:0;margin:2px 0;padding:0">' + pt.d + ' · 来源：' + esc(m.source) + '</p>'
+    + '<p class="ctx" style="border:0;margin:2px 0;padding:0">趋势只用于回顾记录，不构成诊断或疗效判断。</p></div>'
+    + '<button data-action="unpin">收起</button></div>';
+}
 function renderOnechart() {
-  return pageHead() + `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px">
-  <b style="font-size:13.5px">已选指标：${state.chartSel.length} 项</b><button data-action="pick-metrics" style="border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:13px">选择指标…</button></div>
-  ${chartSVG(state.chartSel.map(id => { const m = D.metricSeries.find(x => x.id === id); return { name: m.name, data: metricData(m) }; }).filter(s => s.data.length))}
-  <p class="ctx">不同量纲的指标同图并列时，纵轴按全体数值域绘制（原型口径，v0.2 再分轴）；分类字段不进趋势。</p></div>`;
+  const groups = [...new Set(D.metricSeries.map(m => m.group))];
+  const pickers = groups.map(g => '<div class="cat-label">' + esc(g) + '</div>'
+    + D.metricSeries.filter(m => m.group === g).map(m => '<label class="metric-pick"><input type="checkbox" data-metric="' + m.id + '"' + (state.chartSel.includes(m.id) ? ' checked' : '') + '><i style="background:' + METRIC_COLOR(m) + '"></i><span>' + esc(m.name) + '</span><small>' + ((metricData(m).at(-1) || [])[2] ?? '—') + '</small></label>').join('')).join('');
+  return pageHead() + '<div class="one-grid">'
+    + '<aside class="rail" aria-label="一图秀筛选项">'
+    + '<section><h3>时间范围</h3><div class="chips">'
+    + [['3m', '近 3 月'], ['6m', '近 6 月'], ['12m', '近 12 月'], ['all', '全部']].map(x => '<button class="chip" data-range="' + x[0] + '" aria-pressed="' + (state.range === x[0]) + '">' + x[1] + '</button>').join('')
+    + '</div></section>'
+    + '<section><h3>选择指标 <small>最多 4 个 · 已选 ' + state.chartSel.length + '</small></h3>' + pickers + '<p class="ctx">点选后图表立即更新。</p></section>'
+    + '<section><h3>显示内容</h3><div class="chips">'
+    + '<button class="chip" data-toggle="treatment" aria-pressed="' + state.toggles.treatment + '">治疗节点</button>'
+    + '<button class="chip" data-toggle="keypoints" aria-pressed="' + state.toggles.keypoints + '">关键点数值</button>'
+    + '<button class="chip" data-toggle="changes" aria-pressed="' + state.toggles.changes + '">变化 ≥20%</button>'
+    + '</div></section></aside>'
+    + '<section class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h3 style="margin:0">病程时间轴</h3><span class="pill">' + state.chartSel.length + ' 个指标</span></div>'
+    + '<div class="legend">' + oneLegend() + '</div>'
+    + oneChartSVG()
+    + '<div>' + pinHTML() + '</div></section></div>';
 }
 function renderTrials() {
   return pageHead() + `<div class="card"><h3>临床研究匹配（演示数据 · 非真实条目）</h3>
@@ -170,10 +284,6 @@ function pageHead() { const p = PAGES.find(x => x[0] === state.view); return `<d
 /* ---- 弹窗 ---- */
 function modal(html) { const root = $('#modal-root'); root.hidden = false; root.innerHTML = `<div class="modal-mask"><div class="modal">${html}</div></div>`; }
 function closeModal() { $('#modal-root').hidden = true; $('#modal-root').innerHTML = ''; }
-function metricsPicker() {
-  modal(`<h3>选择要进一图秀的指标</h3>${D.metricSeries.map(m => `<label style="display:block;margin:6px 0;font-size:13px"><input type="checkbox" value="${m.id}" ${state.chartSel.includes(m.id) ? 'checked' : ''}> ${esc(m.group)} · ${esc(m.name)}${metricData(m).length ? '' : '（无记录）'}</label>`).join('')}
-  <div class="row"><button data-action="close">取消</button><button class="primary" data-action="apply-metrics">应用</button></div>`);
-}
 function settingsModal() {
   modal(`<h3>设置</h3><table>
   <tr><th>患者资料目录</th><td>本机目录（演示：已激活）</td></tr>
@@ -183,7 +293,7 @@ function settingsModal() {
   <div class="row"><button data-action="close">关闭</button></div>`);
 }
 function aboutModal() { modal(`<h3>关于小纤宝</h3><p style="font-size:13px">小纤宝 FibroPal · 神经纤维瘤病工作台 · <b>v${D.version}</b>（原型 v0.1）</p><p class="ctx">信息整理与就诊准备工具，不提供诊断与治疗建议。</p><div class="row"><button data-action="close">关闭</button></div>`); }
-function helpModal() { modal(`<h3>原型操作说明</h3><ul style="font-size:13px"><li>指标卡点击可 3D 翻转（背面=最近记录+来源）</li><li>随访日历/治疗线为折叠卡，注意收/展两态</li><li>一图秀右上「选择指标…」开指标选择窗</li><li>遗传家系私密区：本页确认展开，换页收回</li><li>AI 草稿按钮演示 agent-draft 携带上下文</li></ul><div class="row"><button data-action="close">关闭</button></div>`); }
+function helpModal() { modal(`<h3>原型操作说明</h3><ul style="font-size:13px"><li>指标卡点击可 3D 翻转（背面=最近记录+来源）</li><li>随访日历/治疗线为折叠卡，注意收/展两态</li><li>一图秀左侧栏：时间范围 + 分组指标勾选（最多 4 个，即时更新）+ 显示开关</li><li>遗传家系私密区：本页确认展开，换页收回</li><li>AI 草稿按钮演示 agent-draft 携带上下文</li></ul><div class="row"><button data-action="close">关闭</button></div>`); }
 function agentDraftModal() {
   const ctx = agentContext();
   const uri = `xxx:agent-draft?prompt=${encodeURIComponent('请基于我的档案帮我整理复诊材料草稿。')}&context=${encodeURIComponent(JSON.stringify(ctx))}`;
@@ -199,16 +309,18 @@ function render() {
 document.addEventListener('click', (e) => {
   const t = e.target;
   const nav = t.closest('[data-nav]'); if (nav) { state.view = nav.dataset.nav; state.privateOpen = false; render(); $('#main').focus({ preventScroll: true }); window.scrollTo(0, 0); return; }
-  const flip = t.closest('[data-flip]'); if (flip && !t.closest('button')) { const id = flip.dataset.flip; state.flipped[id] = !state.flipped[id]; flip.classList.toggle('flipped'); flip.setAttribute('aria-pressed', String(!!state.flipped[id])); return; }
+  const flip = t.closest('[data-flip]'); if (flip) { const id = flip.dataset.flip; state.flipped[id] = !state.flipped[id]; const inner = flip.querySelector('.mcard-inner'); if (inner) inner.classList.toggle('flipped'); flip.setAttribute('aria-pressed', String(!!state.flipped[id])); return; }
   const fold = t.closest('[data-fold]'); if (fold) { const g = fold.dataset.fold, id = fold.dataset.id; const arr = state.fold[g]; const i = arr.indexOf(id); i >= 0 ? arr.splice(i, 1) : arr.push(id); fold.closest('.foldout').classList.toggle('open'); const body = fold.parentElement.querySelector('.foldout-body'); body.hidden = !body.hidden; return; }
-  const act = t.closest('[data-action]'); if (!act) return;
+  const act = t.closest('[data-action],[data-range],[data-toggle]'); if (!act) return;
   const a = act.dataset.action;
   if (a === 'settings') settingsModal();
   else if (a === 'about') aboutModal();
   else if (a === 'help') helpModal();
   else if (a === 'close') closeModal();
-  else if (a === 'pick-metrics') metricsPicker();
-  else if (a === 'apply-metrics') { state.chartSel = [...$('#modal-root').querySelectorAll('input:checked')].map(i => i.value); closeModal(); render(); }
+  else if (act.dataset.range) { state.range = act.dataset.range; render(); }
+  else if (act.dataset.toggle) { const k = act.dataset.toggle; state.toggles[k] = !state.toggles[k]; render(); }
+  else if (act.dataset.pin) { state.pin = act.dataset.pin; render(); }
+  else if (a === 'unpin') { state.pin = null; render(); }
   else if (a === 'private') { state.privateOpen = !state.privateOpen; render(); }
   else if (a === 'agent') { const d = $('#agent-dock'); d.hidden = !d.hidden; $('#agent-toggle').setAttribute('aria-expanded', String(!d.hidden)); $('#agent-state').textContent = d.hidden ? '未进入激活' : '面板已打开'; }
   else if (a === 'agent-size') { $('#agent-dock').dataset.size = act.dataset.size; $('#agent-dock').querySelectorAll('[data-action="agent-size"]').forEach(b => b.setAttribute('aria-pressed', String(b === act))); }
@@ -218,5 +330,12 @@ document.addEventListener('click', (e) => {
   else if (a === 'open-store') helpModal();
 });
 $('#font-toggle').addEventListener('click', () => { state.bigfont = !state.bigfont; document.body.classList.toggle('bigfont', state.bigfont); $('#font-toggle').setAttribute('aria-pressed', String(state.bigfont)); });
+document.addEventListener('change', (e) => {
+  const mb = e.target.closest('input[data-metric]'); if (!mb) return;
+  const id = mb.dataset.metric;
+  if (mb.checked) { if (state.chartSel.length >= 4) { mb.checked = false; return; } if (!state.chartSel.includes(id)) state.chartSel.push(id); }
+  else state.chartSel = state.chartSel.filter(x => x !== id);
+  render();
+});
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); if (e.key === 'Enter' && e.target.dataset && e.target.dataset.flip) e.target.click(); });
 render();

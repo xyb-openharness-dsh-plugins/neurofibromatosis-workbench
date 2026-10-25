@@ -4,19 +4,25 @@
 
 ## 原型实渲截图（v0.1 · 2026-10-25 实拍）
 
-| 看板（首屏含版本号） | 瘤体与指标 · 3D 翻转卡背面 |
+| 看板（首屏含版本号） | 瘤体与指标 · 指标卡正面（系列色点/较前次/来源） |
 | --- | --- |
-| ![看板](docs/screenshots/01-dashboard.png) | ![指标卡翻转](docs/screenshots/02-tumors-metrics-flipped.png) |
+| ![看板](docs/screenshots/01-dashboard.png) | ![指标卡正面](docs/screenshots/02-tumors-metrics.png) |
+| 瘤体与指标 · 卡片原位 3D 翻转背面（sparkline+端日期） | |
+| ![指标卡翻转](docs/screenshots/02-tumors-metrics-flipped.png) | |
 
-| 随访日历 · 分龄折叠展开态 | 一图秀 · 指标选择窗口 |
+| 随访日历 · 分龄折叠展开态 | 一图秀 · 左栏筛选（范围/指标/开关） |
 | --- | --- |
-| ![随访日历](docs/screenshots/03-calendar-foldout-expanded.png) | ![一图秀](docs/screenshots/04-onechart-metric-picker.png) |
+| ![随访日历](docs/screenshots/03-calendar-foldout-expanded.png) | ![一图秀](docs/screenshots/04-onechart-rail-default.png) |
+
+| 一图秀 · 动态切换（近12月+勾选换指标） | 一图秀 · 记录点查看（数值/日期/来源） |
+| --- | --- |
+| ![动态切换](docs/screenshots/04-onechart-dynamic-switched.png) | ![记录点](docs/screenshots/04-onechart-pin.png) |
 
 | 治疗线折叠卡（展态） | 临床研究匹配（匹配指数+条件明细） |
 | --- | --- |
 | ![治疗线](docs/screenshots/05-treatment-foldout.png) | ![临床研究](docs/screenshots/06-trials-match.png) |
 
-> 指标卡为分系列有序卡片墙，点击 3D 翻转看背面（最近记录+来源）；趋势折线 SVG `class="chart"`、Fritsch–Carlson 平滑；治疗线/随访日历为折叠卡，收/展两态均为验收态；独立评审 P0=0（2026-10-25，报告见 docs/PROTOTYPE-REVIEW.md）。
+> 指标卡与一图秀按 breast-cancer-workbench（26 号成熟口径）重做（2026-10-25 用户判定初版不合格后返工）：分系列有序固定尺寸卡片墙、点击原位 3D 翻转（背面 sparkline+端日期+来源），正面带「较前次 ↑/↓/→」；一图秀为左栏（时间范围 chips / 分组指标勾选即时更新，最多 4 个 / 治疗节点·关键点数值·变化≥20% 开关）+ 每条线按自身记录范围缩放 + 图例带全期区间 + 记录点点击查看（数值/日期/来源）。趋势 SVG `class="chart"`、Fritsch–Carlson 平滑；独立评审 P0=0。
 
 这是接入骨架，尚未实现真实业务。初始化后先将 [项目设计提示词](docs/DESIGN-PROMPT.md) 交给当前Agent；它应展示实际路径并以已有用户/场景/流程素材对齐设计者、研究与取舍原则。癌种项目另有 [完整专用提示词](prompts/NEW-CANCER-WORKBENCH.md)。需求见 [BRIEF](docs/BRIEF.md)，规格见 [SPEC](docs/SPEC.md)，任务见 [TASKS](docs/TASKS.md)；先读 [AGENTS](AGENTS.md)。CLI输出交接与首问，实际对话由Agent接续。
 
