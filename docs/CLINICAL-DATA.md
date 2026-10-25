@@ -18,3 +18,9 @@
 
 ## 数据获取
 - MinerU 解析指南 PDF（18 号六部件）；fetch-nf-trials 拉临床试验库（M4）。
+
+## 临床试验库（M4 · 2026-10-25 实采）
+- 四件套：scripts/fetch-nf-trials-2026.mjs + research/neurofibromatosis/{trials-2026.jsonl, nf_trials_2026.sqlite, manifest.json}。
+- 实采结果：**364 条**（chinadrugtrials 17 + ictrp 347；合并前 364，登记号无跨源重复）；一致性断言 manifest=jsonl=sqlite=364 通过（脚本内置，不符退出码 1）。
+- 通道终态如实：chinadrugtrials/ictrp SUCCESS；xyb_chinadrugtrials_archive / chictr_pancreatic_archive / ctv = NEEDS_SETUP、chictr_online = NOT_ENABLED、ictrp 中文词 FAILED（英文词 SUCCESS）——这些通道对 NF **未查过**，不冒充已查。
+- 状态一律「登记状态，未核实」；登记 ≠ 有效 ≠ 安全 ≠ 可入组。

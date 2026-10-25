@@ -1,0 +1,65 @@
+{
+  "topic": "neurofibromatosis",
+  "year": "2026",
+  "snapshotDate": "2026-10-25",
+  "tool": "unified-trial-mcp @ /Users/sammini/Downloads/unified_search_trials/dist/src/cli/main.js",
+  "queries": [
+    {
+      "keyword": "神经纤维瘤病",
+      "note": "中文标准名（2025 版指南条目名）"
+    },
+    {
+      "keyword": "1型神经纤维瘤病",
+      "note": "中文标准名（NF1，含\"Ⅰ型\"变体由检索器分词）"
+    },
+    {
+      "keyword": "神经纤维瘤",
+      "note": "中文宽口径（含瘤体本身）"
+    },
+    {
+      "keyword": "2型神经纤维瘤病",
+      "note": "中文标准名（NF2，现更名 NF2 相关施万细胞瘤病）"
+    },
+    {
+      "keyword": "施万细胞瘤病",
+      "note": "中文标准名（schwanomatosis）"
+    },
+    {
+      "keyword": "neurofibromatosis type 1",
+      "note": "英文标准名（NF1）"
+    },
+    {
+      "keyword": "NF1",
+      "note": "英文缩写（宽）"
+    },
+    {
+      "keyword": "neurofibromatosis type 2",
+      "note": "英文标准名（NF2）"
+    },
+    {
+      "keyword": "schwannomatosis",
+      "note": "英文标准名"
+    },
+    {
+      "keyword": "plexiform neurofibroma",
+      "note": "瘤体语境（丛状神经纤维瘤，MEK 方向试验主要人群）"
+    }
+  ],
+  "perSourceLimit": 200,
+  "recordCount": 364,
+  "dbCount": 364,
+  "sourceStatusRows": 60,
+  "honesty": {
+    "offlineCorpora": "离线语料对 NF 无覆盖；只依赖在线通道终态，见 source_statuses 表；失败通道如实记\"未查过\"",
+    "statusWording": "登记 ≠ 有效 ≠ 安全 ≠ 可入组；状态一律\"登记状态，未核实\"",
+    "mergeRule": "仅同一登记号（NCT/ChiCTR/CDE 等）合并，其余并排保留来源"
+  },
+  "files": {
+    "trials-2026.jsonl": {
+      "sha256": "2e29354b612355399ac79072c2db4b3332af349614ffa82b00dc8a6a3b3a571f"
+    },
+    "nf_trials_2026.sqlite": {
+      "sha256": "ce9b8fbb2427454c7f5dbcedab18d7be2a1990df3ccd8a8b09c096b3d970c6d4"
+    }
+  }
+}
