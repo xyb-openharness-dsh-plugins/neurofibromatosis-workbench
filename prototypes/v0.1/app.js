@@ -280,49 +280,58 @@ function matchTrial(t) {
   return { t, evals, met, unmet, unknown, pct, band, hardUnmet };
 }
 const BAND = { high: ['高度符合'], partial: ['部分符合'], needs_info: ['需补充信息'], ineligible: ['硬性条件不满足'] };
-const critIcon = st => st === 'met' ? '<span class="pill ok" style="margin:0">✓</span>' : st === 'unmet' ? '<span class="pill todo" style="margin:0">✕</span>' : '<span class="pill" style="margin:0">?</span>';
+const critIcon = st => `<span class="crit-mark ${st === 'met' ? 'ok' : st === 'unmet' ? 'no' : 'q'}">${st === 'met' ? '✓' : st === 'unmet' ? '✕' : '?'}</span>`;
 let savedTrials = {};
 function trialCard(m) {
   const t = m.t;
   const [bandLabel] = BAND[m.band];
   const saved = savedTrials[t.reg];
+  const bandCls = m.band === 'high' ? 'ok' : m.band === 'partial' ? 'warn' : m.band === 'ineligible' ? 'no' : 'grey';
   const order = { unmet: 0, unknown: 1, met: 2 };
   const sorted = [...m.evals].sort((a, b) => order[a.state] - order[b.state]);
   const top = sorted.slice(0, 4), rest = sorted.slice(4);
-  const line = ({ c, state }) => `<div class="critline">${critIcon(state)}<span><b>${c.kind === 'exclude' ? '排除' : '入组'} · ${esc(c.cat)}</b>${c.hard ? ' <small style="color:var(--warn)">硬性</small>' : ''}：${esc(c.need)}</span><small style="color:var(--muted)">记录里是：${esc(c.actual)} → <b>${STATE_NAME[state][0]}</b></small></div>`;
-  return `<div class="card trial-card" style="margin-bottom:12px">
-    <div class="trial-top"><span class="regbadge" style="background:${{ CN: '#a4561f', EU: '#2f6f8f', JP: '#22664e' }[t.flag] || '#5b6470'}">${esc(t.flag)}</span><span class="regno">${esc(t.reg)}</span><span class="pill">${esc(t.phase)} 期</span><span class="pill">${esc(t.scope)}</span><span class="pill">${t.verified ? esc(t.verified) : '<b style="color:var(--warn)">未核验</b>'}</span></div>
-    <p style="font-weight:600;margin:6px 0 2px">${esc(t.title)}</p>
-    <p class="ctx" style="border:0;margin:2px 0;padding:0">${esc(t.registry)}</p>
-    <div style="display:flex;align-items:center;gap:10px;margin:8px 0">
-      <div class="matchbar"><i style="width:${m.pct}%"></i></div>
-      <b style="font-size:15px;color:var(--accent)">${m.pct}%</b>
-      <span class="pill ${m.band === 'high' ? 'ok' : m.band === 'partial' ? '' : 'todo'}">${esc(bandLabel)}</span>
-      <span class="pill ok">符合 ${m.met}</span>${m.unmet ? `<span class="pill todo">不符合 ${m.unmet}</span>` : ''}${m.unknown ? `<span class="pill">待确认 ${m.unknown}</span>` : ''}
-      <a class="text-button" href="${esc(t.url)}" target="_blank" rel="noreferrer" style="margin-left:auto">登记原文 ↗</a>
+  const line = ({ c, state }) => `<div class="crit ${state === 'unmet' ? 'unmet' : state === 'unknown' ? 'unknown' : ''}">
+    <div class="crit-line">${critIcon(state)}<span><b>${c.kind === 'exclude' ? '排除' : '入组'} · ${esc(c.cat)}</b>${c.hard ? '<span class="hardtag">硬性</span>' : ''}</span></div>
+    <p>${esc(c.need)}</p>
+    <small><b>${STATE_NAME[state][0]}</b> · 记录里是：${esc(c.actual)} · 条件要求：${esc(c.need)}</small>
+  </div>`;
+  return `<section class="trial-card ${m.band === 'ineligible' ? 'ineligible' : ''}">
+    <div class="trial-top">
+      <div style="min-width:0">
+        <div class="trial-tags"><span class="pill">${esc(t.phase)} 期</span><span class="pill">${esc(t.scope)}</span><span class="pill ${t.verified ? '' : 'todo'}">${t.verified ? esc(t.verified) : '未核验'}</span></div>
+        <h2>${esc(t.title)}</h2>
+        <p class="trial-reg">${esc(t.reg)} · ${esc(t.registry)}</p>
+      </div>
+      <div class="fit ${bandCls}"><b>${m.pct}<small>%</small></b><span>粗筛符合度</span><em>${esc(bandLabel)}</em></div>
     </div>
-    <div class="critlist">${top.map(line).join('')}</div>
-    ${rest.length ? `<details><summary class="text-button" style="display:inline">其余 ${rest.length} 条条件</summary><div class="critlist">${rest.map(line).join('')}</div></details>` : ''}
-    <div class="row" style="display:flex;gap:8px;margin-top:8px">
+    <p class="trial-sum">${esc(t.summary)}</p>
+    <div class="match-counts"><span class="pill ok">符合 ${m.met}</span>${m.unmet ? `<span class="pill todo">不符合 ${m.unmet}</span>` : ''}${m.unknown ? `<span class="pill">待确认 ${m.unknown}</span>` : ''}</div>
+    <div class="crit-list">${top.map(line).join('')}</div>
+    ${rest.length ? `<details class="crit-more"><summary>其余 ${rest.length} 条条件</summary><div class="crit-list">${rest.map(line).join('')}</div></details>` : ''}
+    <div class="trial-actions">
       <button data-action="trial-save" data-id="${esc(t.reg)}">${saved ? '已收藏（在跟）' : '收藏并跟踪'}</button>
       <button data-action="trial-ask" data-id="${esc(t.reg)}">把待确认项加进问题清单</button>
+      <a class="text-button" href="${esc(t.url)}" target="_blank" rel="noreferrer">看登记原文 ↗</a>
     </div>
-    <p class="ctx">粗筛符合度 = 符合项 ÷ 已对照项（符合+不符合+待确认）。未知项按 0 计，因此只会偏低、不会偏高。这不是入组资格，也不代表效果。</p>
-  </div>`;
+    <p class="ctx">符合度 = 符合项 ÷ 已对照项（符合+不符合+待确认）。未知项按 0 计，因此只会偏低、不会偏高。这不是入组资格，也不代表效果。</p>
+  </section>`;
 }
-
 function renderTrials() {
   const all = D.trials.map(matchTrial);
   const fit = all.filter(m => m.band !== 'ineligible').sort((a, b2) => b2.pct - a.pct);
   const bad = all.filter(m => m.band === 'ineligible');
-  return pageHead() + `
-  <div class="card" style="margin-bottom:12px"><h3>用来对照的档案事实（TRL-01 口径）</h3>
-  <table>${D.trialFacts.map(f => `<tr><th style="width:180px">${esc(f[0])}</th><td><b>${esc(f[1])}</b> <small style="color:var(--ink-2)">· ${esc(f[2])}</small></td></tr>`).join('')}</table>
-  <p class="ctx">每一项都来自你的记录，带日期与谁说的；没记的写「未记录」。偏好（如接受活检/安慰剂）只影响排序与提示，不改变符合判断。</p></div>
+  const exportText = ['【临床试验对照 · ' + new Date().toISOString().slice(0, 10) + '】',
+    ...D.trialFacts.map(f => '- ' + f[0] + '：' + f[1] + '（' + f[2] + '）'),
+    ...all.map(m => '- ' + m.t.reg + ' ' + m.pct + '%（' + BAND[m.band][0] + '，符合 ' + m.met + '/待确认 ' + m.unknown + '/不符合 ' + m.unmet + '）'),
+    '口径：符合度=符合÷已对照项，未知按0计；不是入组资格。'].join('\n');
+  return pageHead() + `<button class="exportbtn" data-action="copy" data-text="${esc(exportText)}">导出这次对照</button>
   <p class="ctx" style="border:0;margin:0 0 10px">条目为真实<b>登记信息</b>（M4 实采 nf_trials_2026.sqlite · 364 条快照 2026-10-25）；招募状态登记库未给出，一律显示「未核验」，不显示「招募中」。是否参加由患者与主诊医生决定。</p>
+  <div class="card" style="margin-bottom:12px"><h3>用来对照的档案事实（TRL-01 口径）</h3>
+  <div class="factgrid">${D.trialFacts.map(f => `<dl><dt>${esc(f[0])}</dt><dd><b>${esc(f[1])}</b><span>${esc(f[2])}</span></dd></dl>`).join('')}</div>
+  <p class="ctx">每一项都来自你的记录，带日期与谁说的；没记的写「未记录」。偏好（如接受活检/安慰剂）只影响排序与提示，不改变符合判断。</p></div>
   <h3 style="font-size:13.5px">按当前记录能对上的（${fit.length}）</h3>
   ${fit.map(trialCard).join('')}
-  ${bad.length ? `<details><summary class="text-button" style="display:inline">硬性条件不满足的 ${bad.length} 条（点开看是哪一条挡住了）</summary>${bad.map(trialCard).join('')}</details>` : ''}`;
+  ${bad.length ? `<details class="badwrap"><summary class="text-button" style="display:inline">硬性条件不满足的 ${bad.length} 条（点开看是哪一条挡住了）</summary>${bad.map(trialCard).join('')}</details>` : ''}`;
 }
 const RENDER = { dashboard: renderDashboard, records: renderRecords, subtype: renderSubtype, calendar: renderCalendar, tumors: renderTumors, treatment: renderTreatment, genetics: renderGenetics, review: renderReview, onechart: renderOnechart, trials: renderTrials };
 
