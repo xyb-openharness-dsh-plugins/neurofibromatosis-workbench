@@ -63,21 +63,24 @@ th { font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
 .series-group { margin-bottom: 14px; }
 .series-group > h3 { font-size: 13.5px; color: var(--ink-2); margin: 0 0 8px; }
 .mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.mcard { position: relative; height: 158px; border: 0; background: none; padding: 0; text-align: left; perspective: 900px; }
+.mcard { position: relative; height: 176px; border: 0; background: none; padding: 0; text-align: left; perspective: 900px; }
 .mcard-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2,.7,.2,1); }
 .mcard-inner.flipped { transform: rotateY(180deg); }
-.mface { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.mface { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
 .mface.back { transform: rotateY(180deg); background: var(--accent-soft); }
 .mcat { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--ink-2); }
 .mcat i { width: 8px; height: 8px; border-radius: 3px; flex: 0 0 8px; }
 .mname { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mval { font-size: 15px; font-weight: 700; }
+.mvalrow { display: flex; align-items: baseline; gap: 10px; }
+.mname .dotchip { display: inline-block; width: 8px; height: 8px; border-radius: 3px; margin-right: 5px; }
 .mval small { font-size: 12.5px; font-weight: 400; color: var(--ink-2); margin-left: 2px; }
 .mdelta { font-size: 12.5px; color: var(--ink-2); }
 .mdelta em { font-style: normal; color: var(--ink); font-weight: 600; }
 .mrec { font-size: 12.5px; color: var(--ink-2); }
 .mmeta { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); border-top: 1px dashed var(--line); padding-top: 4px; }
-.mmeta .hint { color: var(--accent); }
+.mmeta .hint { color: var(--accent); white-space: nowrap; }
+.mmeta > span:first-child { overflow: hidden; text-overflow: ellipsis; }
 .msp-labels { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-2); }
 .mfoot { margin-top: auto; font-size: 12.5px; color: var(--ink-2); border-top: 1px dashed var(--line); padding-top: 4px; }
 .mna { font-size: 12.5px; color: var(--ink-2); margin-top: 6px; }
@@ -117,7 +120,7 @@ svg.chart .dot:hover { r: 6; }
 .foldout-body[hidden] { display: none; }
 
 /* 图表 */
-svg.chart { width: 100%; height: auto; display: block; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+svg.chart { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: var(--radius); }
 .chart text { font-size: 12.5px; fill: var(--ink-2); }
 .chart .curve { fill: none; stroke: var(--chart); stroke-width: 2; }
 .chart .dot { fill: var(--chart); }

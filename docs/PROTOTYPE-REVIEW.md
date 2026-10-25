@@ -24,3 +24,8 @@
 - 返工中实测修复：demo-data 加色正则咬坏 series 键（语法错）；smoothPath 需数组入参（一图秀/卡背曾全 NaN）；pin 与 chips 需入 data-action 路由；端值标签按系列序错位防压字；治疗带 x1 钳制入绘图区。
 - 实测证据：04-onechart-rail-default / 04-onechart-dynamic-switched（近12月高亮+勾选换指标即时重绘）/ 04-onechart-pin / 02-tumors-metrics / 02-tumors-metrics-flipped 五张新截图。
 - 新增 P2：一图秀多指标下月度刻度在窄容器可能拥挤（v0.2 随窄形态复测）。
+
+## 2026-10-25 二次微调（用户反馈：翻转卡拥挤、折线图不要背景色）
+- 卡面 4 行化：值+较前次同行，「共 N 次·日期·来源」合并进 meta 行（超长省略号，翻转提示不再竖排）；卡高 158→176、内边距与行距加大；背面去分类行（色点并入名称行）。
+- svg.chart 去背景色（保留细边框；卡背 sparkline 本就无边框）。
+- 刷新截图：02-tumors-metrics / 02-tumors-metrics-flipped / 04-onechart-rail-default。

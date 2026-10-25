@@ -165,18 +165,15 @@ function mcard(m) {
   const cat = esc(m.group.replace('系列', ''));
   const front = '<span class="mcat"><i style="background:' + color + '"></i>' + cat + '</span>'
     + '<span class="mname">' + esc(m.name) + '</span>'
-    + '<span class="mval">' + (last ? last.v : '—') + '<small>' + esc(m.unit || '') + '</small></span>'
-    + '<span class="mdelta">' + delta + '</span>'
-    + '<span class="mrec">共 ' + pts.length + ' 次记录' + (pts.length > 1 ? ' · 点击翻转看趋势' : '') + '</span>'
-    + '<span class="mmeta"><span>' + (last ? longDate(last.d) : '—') + ' · ' + esc(m.source) + '</span><span class="hint">翻转 ↗</span></span>';
+    + '<span class="mvalrow"><span class="mval">' + (last ? last.v : '—') + '<small>' + esc(m.unit || '') + '</small></span>'
+    + '<span class="mdelta">' + delta + '</span></span>'
+    + '<span class="mmeta"><span>共 ' + pts.length + ' 次 · ' + (last ? longDate(last.d) : '—') + ' · ' + esc(m.source) + '</span><span class="hint">翻转 ↗</span></span>';
   const back = pts.length > 1
-    ? '<span class="mcat"><i style="background:' + color + '"></i>' + cat + '</span>'
-      + '<span class="mname">' + esc(m.name) + ' · 最近 ' + pts.length + ' 次</span>'
+    ? '<span class="mname"><i class="dotchip" style="background:' + color + '"></i>' + esc(m.name) + ' · 最近 ' + pts.length + ' 次</span>'
       + sparkPts(pts, color)
       + '<span class="msp-labels"><span>' + longDate(pts[0].d) + '</span><span>' + longDate(last.d) + '</span></span>'
       + '<span class="mfoot">仅回顾已记录值 · 点击返回</span>'
-    : '<span class="mcat"><i style="background:' + color + '"></i>' + cat + '</span>'
-      + '<span class="mname">' + esc(m.name) + '</span>'
+    : '<span class="mname"><i class="dotchip" style="background:' + color + '"></i>' + esc(m.name) + '</span>'
       + '<span class="mna">只有 ' + pts.length + ' 次记录，暂不连线。<br>再记录一次后显示趋势。</span>'
       + '<span class="mfoot">点击返回</span>';
   return '<button class="mcard" data-flip="' + m.id + '" aria-pressed="' + flipped + '" aria-label="' + esc(m.name) + '，' + (last ? last.v + (m.unit || '') : '无记录') + '；点击翻转">'
