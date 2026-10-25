@@ -33,7 +33,7 @@ export function seedDemo(db) {
     const unit = m.unit
     ins(`INSERT INTO metrics (key, group_title, name, unit, kind, band_low, band_high, source_title, source_version, in_use)
       VALUES (?,?,?,?,?,NULL,NULL,?,?,1)`, m.id, m.group, m.name, unit, 'numeric', m.source, '2025')
-    const series = m.series ?? (m.id === 'tumor-t01' ? d.tumors[0].series : [])
+    const t = m.id && m.id.startsWith('tumor-') ? d.tumors.find(x => x.id.toUpperCase() === ('T-' + m.id.slice(6))) : null; const series = m.series ?? (t ? t.series : [])
     for (const [y, mo, v] of series) {
       ins(`INSERT INTO metric_points (profile_key, metric_key, taken_at, value_num, value_text, tumor_no, note) VALUES (?,?,?,?,NULL,?,NULL)`,
         pk, m.id, `${y}-${String(mo).padStart(2, '0')}-15`, v, m.id.startsWith('tumor') ? m.id.replace('tumor-', '') : null)

@@ -17,6 +17,7 @@ const SUBTITLES = {
 };
 
 const state = { view: 'dashboard', flipped: {}, fold: { ageBands: ['child'], lines: ['TL-1'] }, chartSel: ['pain', 'tumor-t01'], range: 'all', toggles: { treatment: true, keypoints: true, changes: true }, pin: null, bigfont: false, privateOpen: false };
+const fmtV = (v) => (Number.isInteger(v) ? v : +v.toFixed(1));
 const METRIC_COLOR = (m) => m.color || '#2f6f8f';
 const toPts = (arr) => (arr || []).map(([y, mo, v]) => ({ d: y + '-' + String(mo).padStart(2, '0') + '-15', v }));
 const longDate = (d) => { const [y, m] = d.split('-'); return y + '.' + Number(m); };
@@ -65,7 +66,7 @@ function chartSVG(seriesList, h = 190) {
   const legend = seriesList.map((s, si) => `<text x="${pad.l + si * 130}" y="${h - 6}" fill="${colors[si % 4]}">${esc(s.name.length > 14 ? s.name.slice(0, 13) + '…' : s.name)}</text>`).join('');
   return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="趋势折线图">${g}${curves}${legend}</svg>`;
 }
-function metricData(m) { return m.series ? m.series : (m.id === 'tumor-t01' ? D.tumors[0].series : []); }
+function metricData(m) { if (m.series) return m.series; if (m.id && m.id.startsWith('tumor-')) { const t = D.tumors.find(x => x.id.toLowerCase() === m.id.replace('tumor-', 't-')); return t ? t.series : []; } return []; }
 function sparkline(data) {
   if (data.length < 2) return '';
   const ys = data.map(p => p[2]); const min = Math.min(...ys), max = Math.max(...ys);
@@ -161,7 +162,7 @@ function mcard(m) {
   const pts = toPts(metricData(m)); const last = pts[pts.length - 1], prev = pts[pts.length - 2];
   const flipped = !!state.flipped[m.id];
   const color = METRIC_COLOR(m);
-  const delta = prev ? ('较前次 ' + (last.v > prev.v ? '↑' : last.v < prev.v ? '↓' : '→') + ' <em>' + Math.abs(last.v - prev.v) + ' ' + esc(m.unit || '') + '</em>') : '首次记录';
+  const delta = prev ? ('较前次 ' + (last.v > prev.v ? '↑' : last.v < prev.v ? '↓' : '→') + ' <em>' + fmtV(Math.abs(last.v - prev.v)) + ' ' + esc(m.unit || '') + '</em>') : '首次记录';
   const cat = esc(m.group.replace('系列', ''));
   const front = '<span class="mcat"><i style="background:' + color + '"></i>' + cat + '</span>'
     + '<span class="mname">' + esc(m.name) + '</span>'
@@ -232,7 +233,7 @@ function oneChartSVG() {
 function oneLegend() {
   return D.metricSeries.filter(m => state.chartSel.includes(m.id) && metricData(m).length).map(m => {
     const vals = toPts(metricData(m)).map(x => x.v);
-    return '<span><i style="background:' + METRIC_COLOR(m) + '"></i><b>' + esc(m.name) + '</b> ' + vals[vals.length - 1] + ' ' + esc(m.unit || '') + '<span class="range">全期 ' + Math.min(...vals) + '–' + Math.max(...vals) + '</span></span>';
+    return '<span><i style="background:' + METRIC_COLOR(m) + '"></i><b>' + esc(m.name) + '</b> ' + fmtV(vals[vals.length - 1]) + ' ' + esc(m.unit || '') + '<span class="range">全期 ' + fmtV(Math.min(...vals)) + '–' + fmtV(Math.max(...vals)) + '</span></span>';
   }).join('');
 }
 function pinHTML() {

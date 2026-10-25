@@ -34,8 +34,11 @@ window.NF_DEMO = {
     { id: 'pain', group: '疼痛系列', name: 'NRS 疼痛评分（0–10）', unit: '分', kind: 'number', source: '通用量表（版本未核实）', color: '#a4561f', series: [[2026, 4, 3], [2026, 5, 4], [2026, 6, 4], [2026, 7, 5], [2026, 8, 4], [2026, 9, 6], [2026, 10, 5]] },
     { id: 'bp-sys', group: '生命体征系列', name: '收缩压', unit: 'mmHg', kind: 'number', source: '2023 版多学科指南（每年监测口径）', color: '#2f6f8f', series: [[2026, 1, 96], [2026, 4, 98], [2026, 7, 99], [2026, 10, 100]] },
     { id: 'bp-dia', group: '生命体征系列', name: '舒张压', unit: 'mmHg', kind: 'number', source: '同上', color: '#5b8a97', series: [[2026, 1, 60], [2026, 4, 61], [2026, 7, 62], [2026, 10, 62]] },
+    { id: 'weight', group: '生长系列', name: '体重', unit: 'kg', kind: 'number', color: '#3e7d5a', source: '2023 版多学科指南（每年监测）', series: [[2024, 10, 24.5], [2025, 10, 28.0], [2026, 4, 29.2], [2026, 10, 30.5]] },
     { id: 'height', group: '生长系列', name: '身高', unit: 'cm', kind: 'number', source: '2023 版多学科指南（每年监测）', color: '#22664e', series: [[2024, 10, 126.5], [2025, 10, 132.0], [2026, 10, 137.5]] },
     { id: 'tumor-t01', group: '瘤体测量系列', name: 'T-01 左颈部长径', unit: 'mm', kind: 'number', source: 'MRI 报告数值', color: '#7a5aa8', series: null /* 引用 tumors[0].series */ },
+    { id: 'tumor-t02', group: '瘤体测量系列', name: 'T-02 右前臂长径', unit: 'mm', kind: 'number', source: '体表测量记录', color: '#9a7ab8', series: null /* 引用 tumors[1].series */ },
+    { id: 'tumor-t03', group: '瘤体测量系列', name: 'T-03 背部长径', unit: 'mm', kind: 'number', source: '体表测量记录', color: '#b8a1d1', series: null /* 引用 tumors[2].series */ },
     { id: 'hearing-l', group: 'NF2/听力系列（本档案未启用）', name: '左耳 PTA', unit: 'dB HL', kind: 'number', source: 'WHO WRH 2021 分级口径', color: '#8a6d3b', series: [] }
   ],
   treatmentLines: [

@@ -60,9 +60,12 @@ th { font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
 .pill.todo { background: #f7e9dd; color: var(--warn); }
 
 /* 3D 翻转指标系列卡（breast 口径：固定尺寸、原位翻转，位置与尺寸不因翻转改变） */
-.series-group { margin-bottom: 14px; }
-.series-group > h3 { font-size: 13.5px; color: var(--ink-2); margin: 0 0 8px; }
-.mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.series-group { margin-bottom: 18px; }
+.series-group > h3 { display: flex; align-items: center; gap: 8px; font-size: 13.5px; margin: 0 0 10px; color: var(--ink); }
+.series-group > h3 small { font-weight: 400; font-size: 12.5px; color: var(--ink-2); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; }
+.series-group + .series-group { border-top: 1px solid var(--line); padding-top: 16px; }
+.mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 12px; }
+.mcard { max-width: 300px; width: 100%; }
 .mcard { position: relative; height: 176px; border: 0; background: none; padding: 0; text-align: left; perspective: 900px; }
 .mcard-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2,.7,.2,1); }
 .mcard-inner.flipped { transform: rotateY(180deg); }
@@ -89,12 +92,13 @@ th { font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
 /* 一图秀（breast 口径：左栏 + 主图；窄形态上下堆叠） */
 .one-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 14px; align-items: start; }
 .rail { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; position: sticky; top: 12px; }
-.rail h3 { font-size: 12.5px; margin: 0 0 6px; }
+.rail h3 { font-size: 12.5px; letter-spacing: .4px; margin: 0 0 8px; color: var(--ink); }
 .rail h3 small { font-weight: 400; color: var(--ink-2); }
-.rail section + section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.rail section + section { margin-top: 14px; padding-top: 13px; border-top: 1px solid #eef1ee; }
+.rail .cat-label { margin-top: 10px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { min-height: 28px; padding: 3px 11px; border-radius: 20px; font-size: 12.5px; background: var(--card); border: 1px solid var(--line); color: var(--ink-2); }
-.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+.chip[aria-pressed="true"] { background: #2c3a34; border-color: #2c3a34; color: #fff; font-weight: 500; }
 .cat-label { font-size: 12.5px; color: var(--ink-2); letter-spacing: .5px; margin: 8px 0 2px; }
 .metric-pick { display: flex; align-items: center; gap: 8px; padding: 5px 4px; font-size: 12.5px; color: var(--ink-2); border-radius: 8px; cursor: pointer; }
 .metric-pick:hover { background: var(--bg); }
