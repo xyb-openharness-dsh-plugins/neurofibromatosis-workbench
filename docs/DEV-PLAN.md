@@ -27,3 +27,8 @@
 - 已纠正：classic 目录移除登记并 pnpm 清理、误建数据目录删除；0.1.4 按本地惯例（tggz 拷入 profile 目录 + file: 依赖 + bundles 登记）装入 web profile；DSH Desktop 06:04 重启无崩溃，node_modules 链接 0.1.4 就位。
 - starter LESSONS 反向条目已修正（147fe6b 的错误方向 → d1c31c6）。
 - 界面加载：待用户在 DSH Desktop 打开小纤宝确认（web profile 与 CML/发作性睡病/CLL 兄弟工作台同列）。
+
+## 2026-10-26 0.1.5：重启后工作台不出现的根因与修复（用户反馈）
+- 根因：dsh/index.js `openStore` 把 `mkdirSync(root, {recursive:true})` 的返回值当路径传给 `join()`——目录首次不存在时返回新建路径（首装可用），**目录已存在时返回 undefined**，于是每次重启 `nf-main` 按 ERR_INVALID_ARG_TYPE 激活失败，工作台不注册、界面不出现（harness.log 里可见 `nf-main ... TypeError`）。
+- 修复：mkdir 与 path 拼接分离；开库失败降级为 503 + health 返回 degraded/storeError（禁裸 throw 契约）；新增回归测试 test/store-root.test.mjs（同一 root 连开两次）。0.1.5 已装入 web profile 并重启，本次启动段无 nf-main 错误。
+- 教训（回流 starter）：① mkdirSync recursive 的返回值不可当路径；② 安装是否"生效"要看 harness.log 本次运行段里有没有 `<plugin-id>` 的错误行，"Harness is ready" 不代表每个 bundle 都激活；③ verify-desktop-load 的"宿主已加载"判据（数据目录/清单）与"界面能看到"是两回事。

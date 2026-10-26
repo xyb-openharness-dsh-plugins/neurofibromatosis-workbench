@@ -20,12 +20,15 @@ export const inject = ['webServer', 'connection']
 export const Config = Schema.object({})
 const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 
-/** 开库：config.root 存在则用真目录，否则 :memory: 演示库（seedDemo 唯一源）。 */
+/**
+ * 开库：config.root 存在则用真目录，否则 :memory: 演示库（seedDemo 唯一源）。
+ * 注意：mkdirSync(root, {recursive:true}) 在目录已存在时返回 undefined，不能把返回值当路径
+ * （NF 0.1.4 坑：首装可用、重启必抛 ERR_INVALID_ARG_TYPE 导致 nf-main 激活失败）。
+ */
 function openStore(config) {
   const root = typeof config?.root === 'string' && config.root.trim() ? config.root : null
-  const db = root
-    ? openDatabase(join(mkdirSync(root, { recursive: true }), 'nf-workbench.sqlite'))
-    : openDatabase(':memory:')
+  if (root) mkdirSync(root, { recursive: true })
+  const db = root ? openDatabase(join(root, 'nf-workbench.sqlite')) : openDatabase(':memory:')
   migrate(db)
   if (!root) seedDemo(db)
   return db
@@ -33,8 +36,15 @@ function openStore(config) {
 
 export function apply(ctx, config = {}) {
   if (!ctx.webServer?.register) throw new Error('Desktop webServer.register is unavailable')
-  const db = openStore(config)
-  ctx.effect(() => { close(db) }, 'nf store')
+  let db = null
+  let openFailure = null
+  try {
+    db = openStore(config)
+  } catch (error) {
+    openFailure = error.message
+    ctx.logger?.warn?.(`nf store unavailable: ${openFailure}`)
+  }
+  if (db) ctx.effect(() => { close(db) }, 'nf store')
 
   const json = (res, status, body) => {
     res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
@@ -42,11 +52,12 @@ export function apply(ctx, config = {}) {
   }
 
   // 交界守卫 + 禁裸 throw 的统一包装
-  const guard = (handler) => (req, res) => {
+  const guard = (handler, { needStore = true } = {}) => (req, res) => {
     try {
       if (typeof ctx.connection?.requestRejection !== 'function') return json(res, 503, { error: 'connection authentication capability unavailable' })
       const rejection = ctx.connection.requestRejection(req)
       if (rejection !== undefined) return json(res, rejection, { error: 'Authentication required' })
+      if (needStore && !db) return json(res, 503, { error: '本机数据目录不可用', code: 'STORE_UNAVAILABLE', detail: openFailure })
       handler(req, res)
     } catch (error) {
       ctx.logger?.warn?.(`nf api error: ${error.message}`)
@@ -64,9 +75,9 @@ export function apply(ctx, config = {}) {
     kind: 'exact', path: '/api/nf/health',
     handler: guard((req, res) => {
       if (req.method !== 'GET') return json(res, 405, { error: 'Method not allowed' })
-      json(res, 200, { ok: true, version: manifest.version, apiVersion: 'v1', capabilities: ['health', 'workbench', 'export', 'agent-context'] })
+      json(res, 200, { ok: true, version: manifest.version, apiVersion: 'v1', degraded: !db, storeError: openFailure, capabilities: ['health', 'workbench', 'export', 'agent-context'] })
     }),
-  }), 'nf health')
+  }, { needStore: false }), 'nf health')
 
   ctx.effect(() => ctx.webServer.register({
     kind: 'exact', path: '/api/nf/workbench',

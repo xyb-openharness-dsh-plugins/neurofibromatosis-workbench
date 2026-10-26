@@ -1,3 +1,7 @@
+## 0.1.5 — 2026-10-26
+
+- 修复重启后工作台不出现：openStore 误用 mkdirSync(recursive) 返回值（目录已存在时 undefined）导致激活抛错；开库失败降级 503/health degraded，不裸 throw；新增 store-root 回归测试（14/14 绿）。
+
 ## 0.1.4 — 2026-10-25
 
 - 临床试验页视觉对齐 biliary v0.2：右上符合度盒（弃进度条）、条件独立描边盒+圆形徽标、档案事实卡格、导出这次对照；开发版 client 同步（含 cond_text JSON 结构化条件）。
