@@ -30,3 +30,16 @@ test('分类不进趋势：series 仅 numeric 指标有 points', () => {
   if (empty.points.length !== 0) throw new Error('无记录系列应如实为空');
   close(db);
 });
+test('空库（真机 profile 初始态）读模型不炸且集合为空数组', async () => {
+  const { openDatabase, migrate } = await import('../dsh/store.js');
+  const { readWorkbench } = await import('../dsh/readmodels.js');
+  const db = openDatabase(':memory:');
+  migrate(db);
+  const wb = readWorkbench(db);
+  if (wb.subject !== null) throw new Error('空库 subject 应为 null');
+  for (const k of ['metrics','tumors','ageBands','treatmentLines','geneticsQuestions','reviewNotes','trials','systems']) {
+    if (!Array.isArray(wb[k])) throw new Error(`${k} 应为数组`);
+  }
+  if (wb.ageBands.length !== 3) throw new Error('三个年龄段段位应齐全');
+  if (wb.treatmentLines.length !== 0) throw new Error('治疗线应为空数组');
+});

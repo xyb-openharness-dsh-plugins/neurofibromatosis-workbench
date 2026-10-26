@@ -49,3 +49,9 @@
 2. **客户端注册抛错**：register 描述符引用了只存在于 Panel 内部的 `healthVersion` → `healthVersion is not defined`，客户端每次注册失败（smoke 能抓，但之前 smoke 测的是 profile 里的旧拷贝而漏报）。改为顶层 VERSION 常量 + 新增版本一致性测试。
 3. **服务端激活崩溃（0.1.4-0.1.6 已修）**：mkdirSync 返回值 + ctx.effect 语义。
 - 最终实测（0.1.11）：/api/nf/health=200；客户端 bundle 进入 boot graph；market disabled=[]；known-providers 记录 icon 🧬 / version 0.1.11（注册成功的硬证据）。
+
+## 2026-10-27 0.1.12：打开即报"请检查该工作台是否已正确安装"的修复（用户反馈）
+- 该文案是 React 错误边界 PanelBoundary 的兜底——工作台已能出现并打开，但 **Panel 渲染即崩**。
+- 根因：真机 profile 的库是空的（按契约不灌演示数据），`subjects` 无行 → 客户端 `wb.subject.nf_type` 等直接抛错。
+- 修复：客户端全面空安全（subject/systems/tumors/ageBands/treatmentLines/reviewNotes/geneticsQuestions/trials 全部 `?? []`/`?.` 兜底），空档案时显示「档案还没建立（正常状态）」引导卡；新增空库读模型回归测试（subject=null、集合为空数组、三个年龄段齐全）。
+- 实测（0.1.12 装机重启）：health 200 且 degraded=false、client 在 boot graph、market disabled=[]、启动段 0 相关错误。待用户打开小纤宝确认空态界面。
