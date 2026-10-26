@@ -44,7 +44,8 @@ export function apply(ctx, config = {}) {
     openFailure = error.message
     ctx.logger?.warn?.(`nf store unavailable: ${openFailure}`)
   }
-  if (db) ctx.effect(() => { close(db) }, 'nf store')
+  // cordis: ctx.effect(fn) 立即执行 fn，返回值才是 disposer。不能写成 () => { close(db) }（那会开库即关库）。
+  if (db) ctx.effect(() => () => { try { close(db) } catch { /* 已关闭 */ } }, 'nf store')
 
   const json = (res, status, body) => {
     res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
@@ -52,16 +53,21 @@ export function apply(ctx, config = {}) {
   }
 
   // 交界守卫 + 禁裸 throw 的统一包装
+  const fail = (res, error) => {
+    ctx.logger?.warn?.(`nf api error: ${error?.message ?? error}`)
+    if (!res.headersSent) json(res, 500, { error: '服务内部错误', code: 'INTERNAL' })
+  }
   const guard = (handler, { needStore = true } = {}) => (req, res) => {
     try {
       if (typeof ctx.connection?.requestRejection !== 'function') return json(res, 503, { error: 'connection authentication capability unavailable' })
       const rejection = ctx.connection.requestRejection(req)
       if (rejection !== undefined) return json(res, rejection, { error: 'Authentication required' })
       if (needStore && !db) return json(res, 503, { error: '本机数据目录不可用', code: 'STORE_UNAVAILABLE', detail: openFailure })
-      handler(req, res)
+      const out = handler(req, res)
+      // 异步 handler 的 rejection 必须收口，否则逃逸成 unhandled rejection（DSH Desktop 会判 fatal load failure）
+      if (out && typeof out.then === 'function') out.catch((error) => fail(res, error))
     } catch (error) {
-      ctx.logger?.warn?.(`nf api error: ${error.message}`)
-      json(res, 500, { error: '服务内部错误', code: 'INTERNAL' })
+      fail(res, error)
     }
   }
 

@@ -37,3 +37,9 @@
 - 06:35 那次激活崩溃后，DSH Desktop **自动在 profile `cordis.patch.yml` 写入 `- id: nf-main / disabled: true`**（并留 `cordis.patch.yml.pre-disable-nf-main-20261026-0635` 备份；package.json 同步留 `.pre-neurofib-workbench-disable-20261026-0635`）。此后纵使代码修好，条目仍被禁用→列表不出现；host 启动段也因此"干净无错"（根本没加载）。
 - 处置：删除禁用行（先备份 `cordis.patch.yml.bak-nf-reenable-*`），确认 YAML 7 条无 nf-main，重启 DSH Desktop——12:34 启动段无 nf-main 错误、未再次出现 disable 备份。
 - 判据升级（回流）：查"工作台不出现"要按顺序 ①profile patch 有无 `- id: <plugin> disabled: true` ②本次运行段有无 `<plugin-id>` error ③node_modules 版本与 bundles 登记 ④人眼。
+
+## 2026-10-26 0.1.6：dsh-desktop fatal load failure 的真凶（ctx.effect 语义）
+- 日志证据（12:33:48 段）：`unhandled rejection: Error: database is not open` → `dsh: fatal load failure: Error: database is not open` → 应用进入 `plugin recovery detection: unresolved` 并自动写 `- id: nf-main / disabled: true`（第二次）。
+- 根因：cordis 的 `ctx.effect(fn)` **立即执行 fn**，把 fn 的返回值当 disposer。我写成 `ctx.effect(() => { close(db) })` → apply 阶段就把库关了；随后任何查询抛 "database is not open"，异步 handler 的 rejection 未被 guard 收口 → 逃逸为 unhandled rejection → DSH 判 fatal。
+- 修复（0.1.6）：`ctx.effect(() => () => { try { close(db) } catch {} })`；guard 对返回 Promise 的 handler 追加 `.catch(fail)`；新增 test/effect-and-guard.test.mjs（16/16 绿）。
+- 验证：12:39 重启段 0 关键错误，无 "database is not open"、无新禁用备份；patch 无 nf-main 条目。

@@ -1,3 +1,7 @@
+## 0.1.6 — 2026-10-26
+
+- 修复 dsh-desktop fatal load failure（真凶）：`ctx.effect(() => { close(db) })` 在 apply 阶段立即关库 → 查询抛 "database is not open" → unhandled rejection → 宿主判 fatal 并自动禁用插件。改为 setup 返回 disposer；guard 收口 async rejection；回归测试 16/16。
+
 ## 0.1.5 — 2026-10-26
 
 - 修复重启后工作台不出现：openStore 误用 mkdirSync(recursive) 返回值（目录已存在时 undefined）导致激活抛错；开库失败降级 503/health degraded，不裸 throw；新增 store-root 回归测试（14/14 绿）。
