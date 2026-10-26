@@ -372,7 +372,12 @@ function aboutModal() { modal(`<h3>关于小纤宝</h3><p style="font-size:13px"
 function helpModal() { modal(`<h3>原型操作说明</h3><ul style="font-size:13px"><li>指标卡点击可 3D 翻转（背面=最近记录+来源）</li><li>随访日历/治疗线为折叠卡，注意收/展两态</li><li>一图秀左侧栏：时间范围 + 分组指标勾选（最多 4 个，即时更新）+ 显示开关</li><li>遗传家系私密区：本页确认展开，换页收回</li><li>AI 草稿按钮演示 agent-draft 携带上下文</li></ul><div class="row"><button data-action="close">关闭</button></div>`); }
 function agentDraftModal() {
   const ctx = agentContext();
-  const uri = `xxx:agent-draft?prompt=${encodeURIComponent('请基于我的档案帮我整理复诊材料草稿。')}&context=${encodeURIComponent(JSON.stringify(ctx))}`;
+  const prompt = '请基于我的档案帮我整理复诊材料草稿。档案上下文：' + JSON.stringify(ctx)
+  const uri = `xxx:agent-draft?prompt=${encodeURIComponent(prompt)}&context=${encodeURIComponent(JSON.stringify(ctx))}`;
+  // Desktop（0.1.15+）：iframe 内经 postMessage 把草稿交给宿主原生会话（customFrame 桥）
+  if (window.parent && window.parent !== window) {
+    try { window.parent.postMessage({ type: 'nf:agent-draft', prompt }, '*') } catch { /* 非 Desktop 环境忽略 */ }
+  }
   modal(`<h3>AI 草稿（agent-draft · 34 号）</h3><p style="font-size:12.5px;word-break:break-all">${esc(uri)}</p><p class="ctx">私密三出口：${state.privateOpen ? '本页已展开，家系已携带' : '私密区未展开，家系未携带'}。</p><div class="row"><button data-action="close">关闭</button></div>`);
 }
 

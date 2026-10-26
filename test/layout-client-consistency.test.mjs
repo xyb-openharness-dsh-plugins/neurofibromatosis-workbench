@@ -1,11 +1,13 @@
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { PANEL } from '../lib/layout.js';
-test('lib/client.js register 参数与 lib/layout.js PANEL 一致（面板参数单一来源）', () => {
-  const src = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8');
-  const m = src.match(/const PANEL = \{ businessSide: '(\w+)', businessWidth: ([\d.]+), customFrame: (true|false) \}/);
-  if (!m) throw new Error('client.js 找不到 PANEL 字面量');
-  if (m[1] !== PANEL.businessSide || Number(m[2]) !== PANEL.businessWidth || m[3] !== String(PANEL.customFrame)) {
-    throw new Error(`漂移：client=${m[1]}/${m[2]}/${m[3]} layout=${PANEL.businessSide}/${PANEL.businessWidth}/${PANEL.customFrame}`);
+test('lib/client.js 面板参数与 lib/layout.js PANEL 一致（面板参数单一来源）', () => {
+  const src0 = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8');
+  const cm = src0.match(/const CUSTOM_FRAME = (true|false)/);
+  const bw = src0.match(/BUSINESS_WIDTH = Number\('([\d.]+)'\)/);
+  const bs = src0.match(/BUSINESS_SIDE = '([a-z]+)'/);
+  if (!cm || !bw || !bs) throw new Error('client.js 缺少面板参数字面量');
+  if (bs[1] !== PANEL.businessSide || Number(bw[1]) !== PANEL.businessWidth || cm[1] !== String(PANEL.customFrame)) {
+    throw new Error(`漂移：client=${bs[1]}/${bw[1]}/${cm[1]} layout=${PANEL.businessSide}/${PANEL.businessWidth}/${PANEL.customFrame}`);
   }
 });

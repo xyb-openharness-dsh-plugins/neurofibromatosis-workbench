@@ -60,3 +60,11 @@
 - 根因：npm 包 `files` 未包含 `prototypes/v0.1/demo-data.js`（demo 唯一源），真机装出来后 `loadDemoData()` ENOENT → openStore 降级 STORE_UNAVAILABLE → 界面全空（0.1.11–0.1.13 皆如此，health 的 degraded 字段其实早已如实报告）。
 - 修复：files 加入 demo-data 唯一源文件；真机空库自动注入演示数据（demo_meta 标记，已有真实数据则绝不触碰——家族 M5 惯例）；顶栏与看板显示「演示数据」横幅；新增 demo-bundle 回归测试（20/20 绿）。
 - 实测（0.1.14 真机）：/api/nf/workbench demo=True，subject NF1，9 指标/3 瘤体/6 试验/3 日历段/2 治疗线——与原型一致。
+
+## 2026-10-27 0.1.15/0.1.16：界面切换为「原型即 UI」（小泌宝/小粒宝 Desktop 模式，用户反馈菜单不可见+UI 丑+文字堆积）
+- 参考：同 profile 的 narcolepsy（小泌宝）client——customFrame 客户端把**自家原型 HTML 经 /ui/ 路由用 iframe 承载**，AI 对话走原生会话（ensureSession+草稿桥），分裂器 25%–45% 可拖可收。这正是"原型是唯一视觉基准"的 Desktop 落地。
+- 0.1.15：整体移植 narcolepsy client（id/UI_ENTRY=/api/nf/ui/、API_PREFIX=/api/nf、nf:agent-draft 桥、🧬/绿主题），弃用手写 React 版（菜单对比度与文字堆积问题随之消失——界面即已签认原型）。
+- 服务端：/api/nf/ui/{,style.css,app.js,demo-data.js} 静态路由（auth 同源 cookie）；health 增加 dir（会话工作区绑定）。
+- 原型：agentDraftModal 增加 postMessage nf:agent-draft 桥（Desktop 内把提示词+上下文交给原生会话草稿，浏览器内不受影响）。
+- 0.1.16：修复 imports 静默替换失败（dirname/fileURLToPath 未导入 → ReferenceError → 条目 did not activate）。教训：python 批量替换必须 assert（本次 import 替换无 assert 漏掉，装机后 404 才发现）。
+- 实测：/api/nf/ui/、style.css、app.js、health 全 200；index 装配图含本包 client.js；smoke/契约/一致性/版本测试全绿（20/20）。

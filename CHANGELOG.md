@@ -1,3 +1,8 @@
+## 0.1.15/0.1.16 — 2026-10-27
+
+- 界面架构对齐家族 Desktop 模式（小泌宝/乳腺癌）：customFrame 客户端 + iframe 承载原型 UI（/api/nf/ui/），原生 AI 会话（顶栏按钮+可拖 25–45%+收起不丢会话）+ nf:agent-draft 草稿桥；弃用手写 React 版（解决菜单对比度、文字堆积，界面与已签认原型逐字符一致）。
+- 0.1.16 修复 imports 缺失导致的条目静默不加载（批量替换必须 assert）。
+
 ## 0.1.14 — 2026-10-27
 
 - 修复真机界面全空：npm files 缺 prototypes/v0.1/demo-data.js（demo 唯一源）致 openStore 降级。真机空库自动注入演示数据（demo_meta 标记、真实数据绝不覆盖），顶栏/看板「演示数据」横幅；demo-bundle 回归测试 20/20。

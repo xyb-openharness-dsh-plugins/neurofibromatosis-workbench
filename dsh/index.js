@@ -9,8 +9,9 @@
  * - 路径前缀一律 /api/nf/。
  */
 import Schema from '@deepseek-ai/schemastery'
-import { readFileSync, mkdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { openDatabase, migrate, close } from './store.js'
 import { seedDemo } from './demo.js'
 import { readWorkbench, readExport, agentContext } from './readmodels.js'
@@ -80,11 +81,38 @@ export function apply(ctx, config = {}) {
     req.on('end', () => { try { resolve(raw ? JSON.parse(raw) : {}) } catch { resolve({}) } })
   })
 
+
+  // 原型即界面（家族 Desktop 惯例）：/api/nf/ui/ 以 iframe 承载 prototypes/v0.1
+  const UI_DIR = join(dirname(fileURLToPath(import.meta.url)), '../prototypes/v0.1')
+  const UI_FILES = {
+    '/api/nf/ui/': ['index.html', 'text/html; charset=utf-8'],
+    '/api/nf/ui/index.html': ['index.html', 'text/html; charset=utf-8'],
+    '/api/nf/ui/style.css': ['style.css', 'text/css; charset=utf-8'],
+    '/api/nf/ui/app.js': ['app.js', 'text/javascript; charset=utf-8'],
+    '/api/nf/ui/demo-data.js': ['demo-data.js', 'text/javascript; charset=utf-8'],
+  }
+  ctx.effect(() => ctx.webServer.register({
+    kind: 'prefix', path: '/api/nf/ui',
+    handler: guard((req, res) => {
+      const pathOnly = new URL(req.url, 'http://local').pathname
+      const entry = UI_FILES[pathOnly]
+      if (req.method !== 'GET') return json(res, 405, { error: 'Method not allowed' })
+      if (!entry) return json(res, 404, { error: 'Not found' })
+      try {
+        const body = readFileSync(join(UI_DIR, entry[0]))
+        res.writeHead(200, { 'content-type': entry[1], 'cache-control': 'no-cache' })
+        res.end(body)
+      } catch (error) {
+        json(res, 500, { error: 'UI 资源读取失败', detail: error.message })
+      }
+    }),
+  }, { needStore: false }), 'nf ui')
+
   ctx.effect(() => ctx.webServer.register({
     kind: 'exact', path: '/api/nf/health',
     handler: guard((req, res) => {
       if (req.method !== 'GET') return json(res, 405, { error: 'Method not allowed' })
-      json(res, 200, { ok: true, version: manifest.version, apiVersion: 'v1', degraded: !db, storeError: openFailure, capabilities: ['health', 'workbench', 'export', 'agent-context'] })
+      json(res, 200, { ok: true, version: manifest.version, apiVersion: 'v1', degraded: !db, storeError: openFailure, dir: config.root ?? null, capabilities: ['health', 'workbench', 'export', 'agent-context'] })
     }),
   }, { needStore: false }), 'nf health')
 
