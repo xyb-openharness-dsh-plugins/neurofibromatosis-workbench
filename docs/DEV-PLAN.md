@@ -55,3 +55,8 @@
 - 根因：真机 profile 的库是空的（按契约不灌演示数据），`subjects` 无行 → 客户端 `wb.subject.nf_type` 等直接抛错。
 - 修复：客户端全面空安全（subject/systems/tumors/ageBands/treatmentLines/reviewNotes/geneticsQuestions/trials 全部 `?? []`/`?.` 兜底），空档案时显示「档案还没建立（正常状态）」引导卡；新增空库读模型回归测试（subject=null、集合为空数组、三个年龄段齐全）。
 - 实测（0.1.12 装机重启）：health 200 且 degraded=false、client 在 boot graph、market disabled=[]、启动段 0 相关错误。待用户打开小纤宝确认空态界面。
+
+## 2026-10-27 0.1.14：真机界面全空的最终根因与修复（用户反馈"和 prototype 差距很大"）
+- 根因：npm 包 `files` 未包含 `prototypes/v0.1/demo-data.js`（demo 唯一源），真机装出来后 `loadDemoData()` ENOENT → openStore 降级 STORE_UNAVAILABLE → 界面全空（0.1.11–0.1.13 皆如此，health 的 degraded 字段其实早已如实报告）。
+- 修复：files 加入 demo-data 唯一源文件；真机空库自动注入演示数据（demo_meta 标记，已有真实数据则绝不触碰——家族 M5 惯例）；顶栏与看板显示「演示数据」横幅；新增 demo-bundle 回归测试（20/20 绿）。
+- 实测（0.1.14 真机）：/api/nf/workbench demo=True，subject NF1，9 指标/3 瘤体/6 试验/3 日历段/2 治疗线——与原型一致。

@@ -12,6 +12,8 @@
  */
 export function readWorkbench(db, { profileKey = 'demo', geneticsOpen = false } = {}) {
   const subject = db.prepare('SELECT * FROM subjects WHERE profile_key = ?').get(profileKey) ?? null;
+  const demoRow = db.prepare(`SELECT value FROM demo_meta WHERE key = 'demo'`).get();
+  const demo = demoRow?.value === 'true';
 
   const sections = Object.fromEntries(
     db.prepare('SELECT key, title, ord FROM section_titles WHERE profile_key = ? AND in_use = 1 ORDER BY ord').all(profileKey)
@@ -69,7 +71,7 @@ export function readWorkbench(db, { profileKey = 'demo', geneticsOpen = false } 
   return {
     subject, sections, systems, metrics, tumors, ageBands, treatmentLines,
     familyMembers, geneticsQuestions, reviewNotes, trials,
-    geneticsOpen,
+    geneticsOpen, demo,
   };
 }
 

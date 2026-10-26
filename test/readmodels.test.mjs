@@ -43,3 +43,14 @@ test('空库（真机 profile 初始态）读模型不炸且集合为空数组',
   if (wb.ageBands.length !== 3) throw new Error('三个年龄段段位应齐全');
   if (wb.treatmentLines.length !== 0) throw new Error('治疗线应为空数组');
 });
+
+test('seedDemo 写入 demo_meta，读模型带 demo 标记', async () => {
+  const { openDatabase, migrate } = await import('../dsh/store.js');
+  const { seedDemo } = await import('../dsh/demo.js');
+  const { readWorkbench } = await import('../dsh/readmodels.js');
+  const db = openDatabase(':memory:');
+  migrate(db); seedDemo(db);
+  const wb = readWorkbench(db);
+  if (wb.demo !== true) throw new Error('demo 标记应为 true');
+  if (!wb.subject) throw new Error('种子后应有 subject');
+});

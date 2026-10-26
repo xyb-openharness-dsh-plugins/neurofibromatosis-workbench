@@ -30,7 +30,10 @@ function openStore(config) {
   if (root) mkdirSync(root, { recursive: true })
   const db = root ? openDatabase(join(root, 'nf-workbench.sqlite')) : openDatabase(':memory:')
   migrate(db)
-  if (!root) seedDemo(db)
+  // 家族 M5 惯例：空库（真机初始态）注入演示数据（demo-data 唯一源），demo_meta 标记；
+  // 已有真实数据（subjects 非空）则绝不触碰。
+  const seeded = db.prepare('SELECT COUNT(*) AS n FROM subjects').get().n
+  if (seeded === 0) seedDemo(db)
   return db
 }
 

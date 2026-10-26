@@ -14,6 +14,8 @@ export function loadDemoData() {
 export function seedDemo(db) {
   const d = loadDemoData()
   const pk = 'demo'
+  db.prepare(`INSERT OR REPLACE INTO demo_meta (key, value) VALUES ('demo', 'true'), ('seeded_at', ?)`)
+    .run(new Date().toISOString())
   db.prepare(`INSERT OR REPLACE INTO subjects (profile_key, name, meta, nf_type, recorder, headline, genetics_open)
     VALUES (?,?,?,?,?,?,0)`).run(pk, d.profile.name, d.profile.meta, d.subtype.type, '妈妈（代记）', null)
 
