@@ -32,3 +32,8 @@
 - 根因：dsh/index.js `openStore` 把 `mkdirSync(root, {recursive:true})` 的返回值当路径传给 `join()`——目录首次不存在时返回新建路径（首装可用），**目录已存在时返回 undefined**，于是每次重启 `nf-main` 按 ERR_INVALID_ARG_TYPE 激活失败，工作台不注册、界面不出现（harness.log 里可见 `nf-main ... TypeError`）。
 - 修复：mkdir 与 path 拼接分离；开库失败降级为 503 + health 返回 degraded/storeError（禁裸 throw 契约）；新增回归测试 test/store-root.test.mjs（同一 root 连开两次）。0.1.5 已装入 web profile 并重启，本次启动段无 nf-main 错误。
 - 教训（回流 starter）：① mkdirSync recursive 的返回值不可当路径；② 安装是否"生效"要看 harness.log 本次运行段里有没有 `<plugin-id>` 的错误行，"Harness is ready" 不代表每个 bundle 都激活；③ verify-desktop-load 的"宿主已加载"判据（数据目录/清单）与"界面能看到"是两回事。
+
+## 2026-10-26 工作台仍不出现的第二层原因：Desktop 自动禁用
+- 06:35 那次激活崩溃后，DSH Desktop **自动在 profile `cordis.patch.yml` 写入 `- id: nf-main / disabled: true`**（并留 `cordis.patch.yml.pre-disable-nf-main-20261026-0635` 备份；package.json 同步留 `.pre-neurofib-workbench-disable-20261026-0635`）。此后纵使代码修好，条目仍被禁用→列表不出现；host 启动段也因此"干净无错"（根本没加载）。
+- 处置：删除禁用行（先备份 `cordis.patch.yml.bak-nf-reenable-*`），确认 YAML 7 条无 nf-main，重启 DSH Desktop——12:34 启动段无 nf-main 错误、未再次出现 disable 备份。
+- 判据升级（回流）：查"工作台不出现"要按顺序 ①profile patch 有无 `- id: <plugin> disabled: true` ②本次运行段有无 `<plugin-id>` error ③node_modules 版本与 bundles 登记 ④人眼。
