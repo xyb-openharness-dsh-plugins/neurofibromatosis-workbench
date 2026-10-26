@@ -43,3 +43,9 @@
 - 根因：cordis 的 `ctx.effect(fn)` **立即执行 fn**，把 fn 的返回值当 disposer。我写成 `ctx.effect(() => { close(db) })` → apply 阶段就把库关了；随后任何查询抛 "database is not open"，异步 handler 的 rejection 未被 guard 收口 → 逃逸为 unhandled rejection → DSH 判 fatal。
 - 修复（0.1.6）：`ctx.effect(() => () => { try { close(db) } catch {} })`；guard 对返回 Promise 的 handler 追加 `.catch(fail)`；新增 test/effect-and-guard.test.mjs（16/16 绿）。
 - 验证：12:39 重启段 0 关键错误，无 "database is not open"、无新禁用备份；patch 无 nf-main 条目。
+
+## 2026-10-26 0.1.11：工作台"不出现"的三层原因全部定位（本次最终修复）
+1. **市场层禁用（最隐蔽）**：`.dsh-market/state.json` → `"disabled": ["@xyb-community/neurofibromatosis-workbench"]`。插件市场 UI 的禁用开关把整包禁掉，日志只留 `toggle: <pkg>: no loader entry matched`；此时 profile patch 已干净、代码已修好，但 loader 根本不挂载该包。解除后 loader 立即挂载。
+2. **客户端注册抛错**：register 描述符引用了只存在于 Panel 内部的 `healthVersion` → `healthVersion is not defined`，客户端每次注册失败（smoke 能抓，但之前 smoke 测的是 profile 里的旧拷贝而漏报）。改为顶层 VERSION 常量 + 新增版本一致性测试。
+3. **服务端激活崩溃（0.1.4-0.1.6 已修）**：mkdirSync 返回值 + ctx.effect 语义。
+- 最终实测（0.1.11）：/api/nf/health=200；客户端 bundle 进入 boot graph；market disabled=[]；known-providers 记录 icon 🧬 / version 0.1.11（注册成功的硬证据）。

@@ -1,3 +1,8 @@
+## 0.1.11 — 2026-10-26
+
+- 修复"工作台不出现"的最终两处：①客户端 register 引用未定义变量 healthVersion（改为顶层 VERSION + 一致性测试）；②宿主市场层 `.dsh-market/state.json` 的 disabled 列表需解除（本次手工解除并验证）。
+- 实测：health 200、client 进 boot graph、known-providers icon 🧬/version 0.1.11。
+
 ## 0.1.6 — 2026-10-26
 
 - 修复 dsh-desktop fatal load failure（真凶）：`ctx.effect(() => { close(db) })` 在 apply 阶段立即关库 → 查询抛 "database is not open" → unhandled rejection → 宿主判 fatal 并自动禁用插件。改为 setup 返回 disposer；guard 收口 async rejection；回归测试 16/16。

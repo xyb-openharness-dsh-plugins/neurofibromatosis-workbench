@@ -1,5 +1,5 @@
 - insert:
-    - id: nf-main
+    - id: neurofibromatosis-workbench-main
       name: "@xyb-community/neurofibromatosis-workbench"
       config:
         root: !!js dshHomePath('neurofibromatosis-workbench')
