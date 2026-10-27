@@ -1,3 +1,11 @@
+## 0.1.17 — 2026-10-27
+
+- 36 号 v2 引入（指南可点 + 状态卡）：原型顶栏「?」整页浮窗四段（定义 → 医学资料规范和指南情况 → 治疗全景 → 发展趋势），数据源 `prototypes/v0.1/primer-data.js`，内容取自 README / docs/SOURCES.md / docs/CLINICAL-DATA.md，不写判定、不复制指南条文。
+- 看板首卡补病程状态卡四件（eyebrow / 锚点派生天数 / 现状行 / 出口按钮排）；本仓 demo 无锚点日，天数显示「待初始化」并指向三步初始化，不手填。
+- 装机层同步：`dsh/index.js` 的 `/api/nf/ui/` 白名单登记 primer 三件套，`package.json.files` 随包发出；漏登记即装机后 404。
+- 链接：3 条可验证 OK（中国政府网 2025 版通知页、协和 2023 版期刊全文页、WHO WRH 2021 出版页）；4 项未取得可验证原件（N02 2021 儿童规范、GenTURIS 2022、NMPA 司美替尼公告、自采 364 条登记快照）均如实 `nolink + note`，未编 URL。
+- 新增 `scripts/check-primer-links.mjs` 并接入 `npm run check`；新增 `scripts/probe-disease-primer.mjs`（P1–P9 + E0）。
+
 ## 0.1.15/0.1.16 — 2026-10-27
 
 - 界面架构对齐家族 Desktop 模式（小泌宝/乳腺癌）：customFrame 客户端 + iframe 承载原型 UI（/api/nf/ui/），原生 AI 会话（顶栏按钮+可拖 25–45%+收起不丢会话）+ nf:agent-draft 草稿桥；弃用手写 React 版（解决菜单对比度、文字堆积，界面与已签认原型逐字符一致）。

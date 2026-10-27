@@ -75,10 +75,30 @@ function sparkline(data) {
 }
 
 /* ---- 页面渲染 ---- */
+/* 36 号 §2.6 · 病程状态卡（疾病概要入口）四件：
+   ① eyebrow ② 锚点派生大字天数 ③ 现状行 ④ 出口按钮排（主按钮 + 疾病概要副按钮）。
+   本仓 demo-data 未提供诊断/治疗锚点日，按规范不手填天数：整卡「待初始化」并指向三步初始化。 */
+function statusCard() {
+  const anchorDay = null; // 只从锚点日派生；无锚点一律 null
+  const line = D.treatmentLines.find(l => l.title.includes('当前')) || D.treatmentLines[0] || null;
+  const status = (line?.rows || []).find(r => r[0] === '状态')?.[1] || '状态未记录';
+  const nextItem = D.ageBands.flatMap(b => b.items).find(i => i.todo);
+  const nextText = nextItem ? '待预约（' + nextItem.name + '）' : '未记录';
+  return `<section class="card status-card" aria-label="病程状态卡">
+    <div class="status-eyebrow">D+N 状态卡 · 距下一次随访</div>
+    <div class="status-day">${anchorDay ? '第 ' + anchorDay + ' 天' : '待初始化'}</div>
+    ${anchorDay ? '' : '<p class="status-hint">未设置锚点日（诊断日 / 开始治疗日等），天数不由手填。三步初始化：① 选择本机资料目录 → ② 导入资料 → ③ 核对候选后建立基线。</p>'}
+    <p class="status-now"><b>${esc(line?.title || '阶段未记录')}</b> · ${esc(status)} · 下次：${esc(nextText)}</p>
+    <div class="status-actions">
+      <button class="primary" data-nav="records">去做三步初始化 →</button>
+      <button class="text-button" data-primer-open aria-label="疾病概要：神经纤维瘤病是什么？定义、医学资料与指南情况、治疗全景、发展趋势">疾病概要：神经纤维瘤病是什么？</button>
+    </div>
+  </section>`;
+}
 function renderDashboard() {
   const next = D.ageBands[0].items.filter(i => i.todo || !i.done).slice(0, 3);
   const t1 = D.tumors[0];
-  return pageHead() + `<div class="grid cols-2">
+  return pageHead() + statusCard() + `<div class="grid cols-2">
     <div class="card"><h3>年龄段的下一件事</h3><ul>${next.map(i => `<li>${esc(i.name)} <span class="ctx-inline">· ${esc(i.freq)}</span></li>`).join('') || '<li>本年龄段项目均有记录</li>'}</ul><p class="ctx">来源逐项见「随访日历」。</p></div>
     <div class="card"><h3>最近变化（只报数值，不判读）</h3><ul><li>T-01 左颈部长径：${t1.series.at(-2)[2]} → ${t1.series.at(-1)[2]} mm（${t1.series.at(-1)[0]}-${t1.series.at(-1)[1]} MRI）</li><li>NRS 最近一次：${D.metricSeries[0].series.at(-1)[2]} 分</li></ul><p class="ctx">变化描述仅陈述记录值差异。</p></div>
     <div class="card"><h3>受累系统</h3><p>${D.subtype.systems.map(esc).join(' · ')}</p><p class="ctx">${esc(D.subtype.sourceNote)}</p></div>

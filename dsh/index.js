@@ -90,6 +90,10 @@ export function apply(ctx, config = {}) {
     '/api/nf/ui/style.css': ['style.css', 'text/css; charset=utf-8'],
     '/api/nf/ui/app.js': ['app.js', 'text/javascript; charset=utf-8'],
     '/api/nf/ui/demo-data.js': ['demo-data.js', 'text/javascript; charset=utf-8'],
+    // 36 号 v2：疾病概要三件套（iframe 内加载；漏登记 = 装机后 404）
+    '/api/nf/ui/primer.css': ['primer.css', 'text/css; charset=utf-8'],
+    '/api/nf/ui/primer-data.js': ['primer-data.js', 'text/javascript; charset=utf-8'],
+    '/api/nf/ui/primer.js': ['primer.js', 'text/javascript; charset=utf-8'],
   }
   ctx.effect(() => ctx.webServer.register({
     kind: 'prefix', path: '/api/nf/ui',
