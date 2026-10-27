@@ -129,21 +129,11 @@ svg.chart { width: 100%; height: auto; display: block; border: 1px solid var(--l
 .chart .curve { fill: none; stroke: var(--chart); stroke-width: 2; }
 .chart .dot { fill: var(--chart); }
 
-/* Agent 面板：25%–45% 可调（narrow/std/wide） */
-.agent-dock { position: fixed; top: 0; right: 0; bottom: 0; width: 25%; min-width: 280px; max-width: 45%; background: var(--card); border-left: 1px solid var(--line); display: flex; flex-direction: column; z-index: 30; }
-.agent-dock[data-size="narrow"] { width: 25%; }
-.agent-dock[data-size="std"] { width: 32%; }
-.agent-dock[data-size="wide"] { width: 45%; }
-.agent-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
-.agent-sizes { display: flex; gap: 4px; }
-.agent-sizes button, .icon-button { border: 1px solid var(--line); background: var(--card); border-radius: 6px; font-size: 12.5px; padding: 2px 8px; }
-.agent-sizes button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
-.agent-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-.agent-hint { font-size: 12.5px; color: var(--ink-2); }
-.agent-carry { background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 10px; font-size: 12.5px; max-height: 46%; overflow: auto; }
+/* AI 入口：只保留页头「和AI讨论」（交给宿主原生会话，本页不自建面板） */
 .discuss-btn { margin-top: 2px; }
-.agent-body .primary { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 9px 12px; font-size: 13.5px; }
-.agent-body button:not(.primary) { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+
+/* 轻提示（独立打开时说明没有会话面板 / 已带入草稿） */
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: min(520px, 92vw); background: var(--ink); color: #fff; font-size: 13px; line-height: 1.6; padding: 10px 14px; border-radius: 8px; z-index: 50; box-shadow: 0 6px 24px rgba(0, 0, 0, .18); }
 
 /* 弹窗（指标选择窗 / 设置 / 关于） */
 .modal-mask { position: fixed; inset: 0; background: rgba(35, 39, 46, .35); display: grid; place-items: center; z-index: 40; }
@@ -164,7 +154,6 @@ body.bigfont .page-head h1 { font-size: 15px; }
   .sidebar { width: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--line); }
   #nav { flex-direction: row; overflow-x: auto; }
   .grid.cols-2, .grid.cols-3 { grid-template-columns: 1fr; }
-  .agent-dock { width: 100% !important; max-width: 100%; min-width: 0; }
   main { padding: 12px; }
 }
 

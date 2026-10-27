@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>小纤宝 FibroPal · 神经纤维瘤病工作台 · v0.1.0</title>
+<title>小纤宝 FibroPal · 神经纤维瘤病工作台 · v0.1.17</title>
 <link rel="stylesheet" href="style.css?v=7">
 <link rel="stylesheet" href="primer.css?v=1">
 </head>
@@ -24,34 +24,15 @@
     <div class="breadcrumb">小纤宝工作台 <span>/</span> <b id="breadcrumb">看板</b></div>
     <div class="top-actions">
       <button class="status" id="ready-store" data-action="open-store"><i></i><span>资料目录</span><b>已激活</b></button>
-      <button class="status" id="agent-toggle" data-action="agent" aria-expanded="false"><i class="grey"></i><span>AI 对话</span><b id="agent-state">未进入激活</b></button>
       <button data-action="settings">设置</button>
       <button id="font-toggle" aria-pressed="false" title="切换大字">大字 Aa</button>
       <button class="dp-trigger" data-primer-open aria-label="疾病概要：定义、医学资料与指南情况、治疗全景、发展趋势" title="疾病概要：定义 · 指南 · 治疗全景 · 趋势">?</button>
-      <button class="ver-chip" id="ver-chip" data-action="about">v0.1.0</button>
+      <button class="ver-chip" id="ver-chip" data-action="about">v0.1.17</button>
     </div>
   </header>
   <main id="main" tabindex="-1"></main>
-  <footer class="foot">小纤宝 FibroPal · 信息整理与就诊准备工具，不提供诊断与治疗建议 · v0.1.0 原型</footer>
+  <footer class="foot">小纤宝 FibroPal · 信息整理与就诊准备工具，不提供诊断与治疗建议 · v0.1.17 原型</footer>
 </div>
-<aside class="agent-dock" id="agent-dock" aria-label="AI 原生会话面板" hidden>
-  <div class="agent-head">
-    <b>AI 对话</b>
-    <div class="agent-sizes">
-      <button data-action="agent-size" data-size="narrow" aria-pressed="false" title="窄">窄</button>
-      <button data-action="agent-size" data-size="std" aria-pressed="true" title="标准">标准</button>
-      <button data-action="agent-size" data-size="wide" aria-pressed="false" title="宽">宽</button>
-    </div>
-    <button class="icon-button" data-action="agent" aria-label="隐藏 AI 对话面板" title="隐藏">×</button>
-  </div>
-  <div class="agent-body">
-    <p class="agent-hint">右侧为宿主原生会话占位。AI 草稿按钮会把提示词与病情上下文一并带入。</p>
-    <div class="agent-carry" hidden></div>
-    <button class="primary" data-action="agent-build">让 AI 帮我整理复诊材料（agent-draft）</button>
-    <button data-action="agent-demo">看一个 AI 草稿示例</button>
-    <p class="agent-hint">AI 输出是草稿与整理建议，不构成诊断或治疗建议；诊疗决定请与医生讨论。</p>
-  </div>
-</aside>
 <div id="modal-root" hidden></div>
 <script src="demo-data.js"></script>
 <script src="app.js"></script>

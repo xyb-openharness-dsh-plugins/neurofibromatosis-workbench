@@ -1,12 +1,12 @@
 /**
- * 演示数据种子：唯一源是 prototypes/v0.1/demo-data.js（原型与开发版共用一份，
- * 改演示数据只改那一个文件，这里只做搬运，不另设副本）。
+ * 演示数据种子：唯一源是 public/demo-data.js（原型 prototypes/v0.1 同步一份；
+ * 改演示数据只改这两处，这里只做搬运，不另设第三份副本）。
  */
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 export function loadDemoData() {
-  const src = readFileSync(fileURLToPath(new URL('../prototypes/v0.1/demo-data.js', import.meta.url)), 'utf8')
+  const src = readFileSync(fileURLToPath(new URL('../public/demo-data.js', import.meta.url)), 'utf8')
   const fn = new Function('window', `${src}; return window.NF_DEMO;`)
   return fn({ NF_DEMO: undefined })
 }

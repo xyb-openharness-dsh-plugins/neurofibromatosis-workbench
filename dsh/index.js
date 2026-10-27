@@ -9,17 +9,22 @@
  * - 路径前缀一律 /api/nf/。
  */
 import Schema from '@deepseek-ai/schemastery'
-import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
+import { readFileSync, mkdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { openDatabase, migrate, close } from './store.js'
 import { seedDemo } from './demo.js'
 import { readWorkbench, readExport, agentContext } from './readmodels.js'
+import { createStaticHandler } from './server.js'
 
 export const name = 'nf-main'
 export const inject = ['webServer', 'connection']
 export const Config = Schema.object({})
 const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+
+/** 业务界面目录：public/ 是随包发出的界面（由 prototypes/v0.1 提升而来）。 */
+export const PUBLIC_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public')
+export const UI_PREFIX = '/api/nf/ui/'
 
 /**
  * 开库：config.root 存在则用真目录，否则 :memory: 演示库（seedDemo 唯一源）。
@@ -82,34 +87,11 @@ export function apply(ctx, config = {}) {
   })
 
 
-  // 原型即界面（家族 Desktop 惯例）：/api/nf/ui/ 以 iframe 承载 prototypes/v0.1
-  const UI_DIR = join(dirname(fileURLToPath(import.meta.url)), '../prototypes/v0.1')
-  const UI_FILES = {
-    '/api/nf/ui/': ['index.html', 'text/html; charset=utf-8'],
-    '/api/nf/ui/index.html': ['index.html', 'text/html; charset=utf-8'],
-    '/api/nf/ui/style.css': ['style.css', 'text/css; charset=utf-8'],
-    '/api/nf/ui/app.js': ['app.js', 'text/javascript; charset=utf-8'],
-    '/api/nf/ui/demo-data.js': ['demo-data.js', 'text/javascript; charset=utf-8'],
-    // 36 号 v2：疾病概要三件套（iframe 内加载；漏登记 = 装机后 404）
-    '/api/nf/ui/primer.css': ['primer.css', 'text/css; charset=utf-8'],
-    '/api/nf/ui/primer-data.js': ['primer-data.js', 'text/javascript; charset=utf-8'],
-    '/api/nf/ui/primer.js': ['primer.js', 'text/javascript; charset=utf-8'],
-  }
+  // 原型即界面：public/ 经 prefix 路由以静态文件发出（外壳 iframe 的 UI_ENTRY 指向这里）。
+  // 只从 public/ 出文件；`..`/绝对路径/符号链接逃逸由 server.js 拒绝。
   ctx.effect(() => ctx.webServer.register({
-    kind: 'prefix', path: '/api/nf/ui',
-    handler: guard((req, res) => {
-      const pathOnly = new URL(req.url, 'http://local').pathname
-      const entry = UI_FILES[pathOnly]
-      if (req.method !== 'GET') return json(res, 405, { error: 'Method not allowed' })
-      if (!entry) return json(res, 404, { error: 'Not found' })
-      try {
-        const body = readFileSync(join(UI_DIR, entry[0]))
-        res.writeHead(200, { 'content-type': entry[1], 'cache-control': 'no-cache' })
-        res.end(body)
-      } catch (error) {
-        json(res, 500, { error: 'UI 资源读取失败', detail: error.message })
-      }
-    }),
+    kind: 'prefix', path: UI_PREFIX,
+    handler: guard(createStaticHandler(PUBLIC_DIR, UI_PREFIX)),
   }, { needStore: false }), 'nf ui')
 
   ctx.effect(() => ctx.webServer.register({

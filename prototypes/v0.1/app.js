@@ -22,13 +22,8 @@ const METRIC_COLOR = (m) => m.color || '#2f6f8f';
 const toPts = (arr) => (arr || []).map(([y, mo, v]) => ({ d: y + '-' + String(mo).padStart(2, '0') + '-15', v }));
 const longDate = (d) => { const [y, m] = d.split('-'); return y + '.' + Number(m); };
 
-/* ---- 私密三出口：渲染 / 导出（复诊成稿）/ Agent 草稿，统一走同一过滤 ---- */
+/* ---- 私密三出口：渲染 / 导出（复诊成稿）/ AI 提示词，统一走同一过滤 ---- */
 function privateData() { return state.privateOpen ? D.genetics.members : null; }
-function agentContext() {
-  const pub = { 分型: D.subtype.type, 瘤体: D.tumors.map(t => `${t.id} ${t.site} 最近 ${t.series.at(-1)[2]}mm`), 随访: D.ageBands[0].items.filter(i => i.todo || !i.done).map(i => i.name) };
-  const priv = privateData() ? { 家系: D.genetics.members.map(m => m.rel) } : { 家系: '（私密区未展开，未携带）' };
-  return { ...pub, ...priv };
-}
 
 /* ---- Fritsch–Carlson 单调保形插值 ---- */
 function smoothPath(pts) {
@@ -75,22 +70,24 @@ function sparkline(data) {
 }
 
 /* ---- 页面渲染 ---- */
-/* 36 号 §2.6 · 病程状态卡（疾病概要入口）四件：
-   ① eyebrow ② 锚点派生大字天数 ③ 现状行 ④ 出口按钮排（主按钮 + 疾病概要副按钮）。
-   本仓 demo-data 未提供诊断/治疗锚点日，按规范不手填天数：整卡「待初始化」并指向三步初始化。 */
+/* 36 号 §2.6 · 随访状态卡（疾病概要入口）四件：
+   ① eyebrow ② 大字天数 ③ 现状行 ④ 出口按钮排（主按钮 + 疾病概要副按钮）。
+   天数只从 demo-data 的既有随访记录派生（最近一次已记录日 → 距今天数），不手填、不推断。 */
 function statusCard() {
-  const anchorDay = null; // 只从锚点日派生；无锚点一律 null
   const line = D.treatmentLines.find(l => l.title.includes('当前')) || D.treatmentLines[0] || null;
   const status = (line?.rows || []).find(r => r[0] === '状态')?.[1] || '状态未记录';
+  // 只从既有随访记录派生，不手填、不推断：最近一次「已记录」日期 → 距今天数
+  const lastDone = D.ageBands.flatMap(b => b.items).map(i => i.done).filter(Boolean).sort().at(-1) || null;
+  const days = lastDone ? Math.max(0, Math.floor((Date.now() - Date.parse(lastDone + 'T00:00:00')) / 86400000)) : null;
   const nextItem = D.ageBands.flatMap(b => b.items).find(i => i.todo);
   const nextText = nextItem ? '待预约（' + nextItem.name + '）' : '未记录';
-  return `<section class="card status-card" aria-label="病程状态卡">
-    <div class="status-eyebrow">D+N 状态卡 · 距下一次随访</div>
-    <div class="status-day">${anchorDay ? '第 ' + anchorDay + ' 天' : '待初始化'}</div>
-    ${anchorDay ? '' : '<p class="status-hint">未设置锚点日（诊断日 / 开始治疗日等），天数不由手填。三步初始化：① 选择本机资料目录 → ② 导入资料 → ③ 核对候选后建立基线。</p>'}
+  return `<section class="card status-card" aria-label="随访状态卡">
+    <div class="status-eyebrow">随访状态卡 · 距上次随访记录</div>
+    <div class="status-day">${days === null ? '暂无记录' : days + ' 天前'}</div>
+    <p class="status-hint">上次记录：${lastDone ? esc(lastDone) : '未记录'}（取自「随访日历」已记录项，不手填）</p>
     <p class="status-now"><b>${esc(line?.title || '阶段未记录')}</b> · ${esc(status)} · 下次：${esc(nextText)}</p>
     <div class="status-actions">
-      <button class="primary" data-nav="records">去做三步初始化 →</button>
+      <button class="primary" data-nav="calendar">查看随访日历 →</button>
       <button class="text-button" data-primer-open aria-label="疾病概要：神经纤维瘤病是什么？定义、医学资料与指南情况、治疗全景、发展趋势">疾病概要：神经纤维瘤病是什么？</button>
     </div>
   </section>`;
@@ -162,7 +159,7 @@ function renderReview() {
   return pageHead() + `<div class="grid cols-2">
   <div class="card"><h3>间隔期变化</h3><ul>${D.reviewNotes.map(n => `<li>${esc(n)}</li>`).join('')}</ul><p class="ctx">数值变化为记录值差异陈述。</p></div>
   <div class="card"><h3>成稿预览（导出出口）</h3><pre style="white-space:pre-wrap;font-size:12.5px">${esc(exportText)}</pre>
-  <div class="row"><button data-action="copy" data-text="${esc(exportText)}">复制成稿</button><button class="primary" data-action="agent-draft" style="border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:8px;padding:6px 12px">AI 草稿（携带上下文）</button></div></div></div>`;
+  <div class="row"><button data-action="copy" data-text="${esc(exportText)}">复制成稿</button></div></div></div>`;
 }
 /* ---- 指标卡（breast 口径：固定尺寸原位翻转；正面当前值+较前次，背面 sparkline+端日期） ---- */
 function sparkPts(pts, color) {
@@ -389,16 +386,32 @@ function settingsModal() {
   <div class="row"><button data-action="close">关闭</button></div>`);
 }
 function aboutModal() { modal(`<h3>关于小纤宝</h3><p style="font-size:13px">小纤宝 FibroPal · 神经纤维瘤病工作台 · <b>v${D.version}</b>（原型 v0.1）</p><p class="ctx">信息整理与就诊准备工具，不提供诊断与治疗建议。</p><div class="row"><button data-action="close">关闭</button></div>`); }
-function helpModal() { modal(`<h3>原型操作说明</h3><ul style="font-size:13px"><li>指标卡点击可 3D 翻转（背面=最近记录+来源）</li><li>随访日历/治疗线为折叠卡，注意收/展两态</li><li>一图秀左侧栏：时间范围 + 分组指标勾选（最多 4 个，即时更新）+ 显示开关</li><li>遗传家系私密区：本页确认展开，换页收回</li><li>AI 草稿按钮演示 agent-draft 携带上下文</li></ul><div class="row"><button data-action="close">关闭</button></div>`); }
-function agentDraftModal() {
-  const ctx = agentContext();
-  const prompt = '请基于我的档案帮我整理复诊材料草稿。档案上下文：' + JSON.stringify(ctx)
-  const uri = `xxx:agent-draft?prompt=${encodeURIComponent(prompt)}&context=${encodeURIComponent(JSON.stringify(ctx))}`;
-  // Desktop（0.1.15+）：iframe 内经 postMessage 把草稿交给宿主原生会话（customFrame 桥）
+function helpModal() { modal(`<h3>原型操作说明</h3><ul style="font-size:13px"><li>指标卡点击可 3D 翻转（背面=最近记录+来源）</li><li>随访日历/治疗线为折叠卡，注意收/展两态</li><li>一图秀左侧栏：时间范围 + 分组指标勾选（最多 4 个，即时更新）+ 显示开关</li><li>遗传家系私密区：本页确认展开，换页收回</li><li>页头「和AI讨论」把本页提示词交给宿主原生 AI 会话（本页不自建对话窗口）</li></ul><div class="row"><button data-action="close">关闭</button></div>`); }
+
+/* ---- AI 入口：只走宿主原生会话（34 号 §2b 面板唯一性，不自建对话窗口） ----
+ * 嵌入式（Desktop iframe 内）：postMessage 给外壳 lib/client.js，由它把提示词填进原生会话草稿；
+ * 独立打开（静态预览）：没有会话面板，只复制提示词并如实说明，不假装有 AI。 */
+const AGENT_NS = 'nf';
+function toast(msg) {
+  let el = $('#toast');
+  if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => { el.hidden = true; }, 4200);
+}
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => {});
+  return Boolean(navigator.clipboard && navigator.clipboard.writeText);
+}
+function sendAgentDraft(prompt) {
   if (window.parent && window.parent !== window) {
-    try { window.parent.postMessage({ type: 'nf:agent-draft', prompt }, '*') } catch { /* 非 Desktop 环境忽略 */ }
+    try { window.parent.postMessage({ type: AGENT_NS + ':agent-draft', prompt, send: true }, window.location.origin); } catch { /* 非 Desktop 环境忽略 */ }
+    toast('已把这一页的提示词带入 AI 会话草稿（在右侧原生会话里确认后发出）');
+    return;
   }
-  modal(`<h3>AI 草稿（agent-draft · 34 号）</h3><p style="font-size:12.5px;word-break:break-all">${esc(uri)}</p><p class="ctx">私密三出口：${state.privateOpen ? '本页已展开，家系已携带' : '私密区未展开，家系未携带'}。</p><div class="row"><button data-action="close">关闭</button></div>`);
+  const copied = copyText(prompt);
+  toast(copied
+    ? '独立打开时没有 AI 会话面板：提示词已复制，请到 Desktop 工作台里用「和AI讨论」'
+    : '独立打开时没有 AI 会话面板，剪贴板也不可用；请到 Desktop 工作台里用「和AI讨论」');
 }
 
 /* ---- 事件 ---- */
@@ -430,21 +443,10 @@ document.addEventListener('click', (e) => {
     state.view = 'review'; render();
   }
   else if (a === 'discuss') {
-    const dock = $('#agent-dock');
-    if (dock.hidden) { dock.hidden = false; $('#agent-toggle').setAttribute('aria-expanded', 'true'); $('#agent-state').textContent = '面板已打开'; }
-    const ctx = pageContext();
-    const uri = 'xxx:agent-draft?prompt=' + encodeURIComponent(discussPrompt()) + '&context=' + encodeURIComponent(JSON.stringify(ctx));
-    const slot = dock.querySelector('.agent-carry');
-    slot.innerHTML = '<b>本页携带（34 号 agent-draft）</b><pre style="white-space:pre-wrap;font-size:12.5px;margin:4px 0">' + esc(JSON.stringify(ctx, null, 1)) + '</pre>'
-      + '<p class="agent-hint">' + esc(uri.slice(0, 160)) + '…</p>';
-    slot.hidden = false;
-    slot.scrollIntoView({ block: 'nearest' });
+    // 单一 AI 入口：页头按钮 → 宿主原生会话（不展开任何自建面板）
+    sendAgentDraft(discussPrompt() + '\n\n档案上下文：' + JSON.stringify(pageContext()));
   }
   else if (a === 'private') { state.privateOpen = !state.privateOpen; render(); }
-  else if (a === 'agent') { const d = $('#agent-dock'); d.hidden = !d.hidden; $('#agent-toggle').setAttribute('aria-expanded', String(!d.hidden)); $('#agent-state').textContent = d.hidden ? '未进入激活' : '面板已打开'; }
-  else if (a === 'agent-size') { $('#agent-dock').dataset.size = act.dataset.size; $('#agent-dock').querySelectorAll('[data-action="agent-size"]').forEach(b => b.setAttribute('aria-pressed', String(b === act))); }
-  else if (a === 'agent-build' || a === 'agent-draft') agentDraftModal();
-  else if (a === 'agent-demo') agentDraftModal();
   else if (a === 'copy') { const text = act.dataset.text; navigator.clipboard && navigator.clipboard.writeText(text); act.textContent = '已复制'; }
   else if (a === 'open-store') helpModal();
 });

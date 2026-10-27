@@ -16,19 +16,13 @@
     "dsh",
     "lib",
     "assets",
+    "public",
     "cordis.patch.yml",
     "README.md",
-    "NOTICE.md",
-    "prototypes/v0.1/demo-data.js",
-    "prototypes/v0.1/index.html",
-    "prototypes/v0.1/style.css",
-    "prototypes/v0.1/app.js",
-    "prototypes/v0.1/primer.css",
-    "prototypes/v0.1/primer-data.js",
-    "prototypes/v0.1/primer.js"
+    "NOTICE.md"
   ],
   "scripts": {
-    "check": "node --check dsh/index.js && node --check lib/client.js && node scripts/check-workbench-package.mjs . && node scripts/check-host-contract.mjs && node scripts/smoke-activate.mjs && node scripts/check-primer-links.mjs",
+    "check": "node --check dsh/index.js && node --check dsh/server.js && node --check lib/client.js && node scripts/check-workbench-package.mjs . && node scripts/check-host-contract.mjs && node scripts/smoke-activate.mjs && node scripts/check-version-ui.mjs && node scripts/check-primer-links.mjs",
     "check:host": "node scripts/check-host-contract.mjs",
     "smoke:activate": "node scripts/smoke-activate.mjs",
     "verify:desktop": "node scripts/verify-desktop-load.mjs",
