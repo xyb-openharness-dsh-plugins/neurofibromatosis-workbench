@@ -1,3 +1,18 @@
+## 0.1.19 — 2026-10-28（装机白屏修复：prefix 路由带尾斜杠）
+
+- **根因**：`dsh/index.js` 把带尾斜杠的 `UI_PREFIX`（`/api/nf/ui/`）直接注册给宿主 prefix 路由。
+  宿主 `dsh-host-webserver` 的命中判据是 `pathname === prefix || pathname.startsWith(prefix + '/')`，
+  于是 `/api/nf/ui/` 本身能命中，`/api/nf/ui/app.js`、`style.css`、`demo-data.js` 全部命不中，
+  落到宿主兜底（回 index.html）→ 浏览器把 HTML 当 JS/CSS 解析（`Unexpected token '<'`）→ **装机后业务区整片空白**。
+  本地 dev-server 挂在根上，永远看不见这一条，所以 check/test 全绿也会翻车。
+- **修法**：新增 `UI_ROUTE = UI_PREFIX.replace(/\/+$/, '')` 专供 `webServer.register`；`createStaticHandler`
+  改用 `stripMountPrefix()`，带/不带尾斜杠两种形态都认（宿主不重写 `req.url`）。
+  iframe 入口仍是 `UI_PREFIX`（带斜杠），对外 URL 不变。
+- **回归**：新增 `test/ui-route.test.mjs`（5 条：注册形态、宿主命中判据、前缀剥离、子资源 200、不回退 HTML），
+  其中一条用宿主源码的判据反证「带尾斜杠注册时 app.js 命不中」。`npm run check` / `npm test` 均退出 0。
+- 实测（宿主同源桩件）：修前 `/api/nf/ui/` 200、`/api/nf/ui/app.js` 404；修后页面与子资源全部 200，
+  真 Chrome 渲染出完整看板（DOM 187 KB，正文 765 字）。
+
 ## 0.1.17 — 2026-10-27
 
 - 36 号 v2 引入（指南可点 + 状态卡）：原型顶栏「?」整页浮窗四段（定义 → 医学资料规范和指南情况 → 治疗全景 → 发展趋势），数据源 `prototypes/v0.1/primer-data.js`，内容取自 README / docs/SOURCES.md / docs/CLINICAL-DATA.md，不写判定、不复制指南条文。

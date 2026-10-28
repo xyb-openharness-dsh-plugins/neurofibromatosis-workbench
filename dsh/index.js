@@ -24,7 +24,18 @@ const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.
 
 /** 业务界面目录：public/ 是随包发出的界面（由 prototypes/v0.1 提升而来）。 */
 export const PUBLIC_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public')
+/** 界面入口（外壳 iframe 用的带尾斜杠形态）。 */
 export const UI_PREFIX = '/api/nf/ui/'
+/**
+ * 路由注册用的前缀：**必须去掉尾斜杠**。
+ * 宿主 dsh-host-webserver 的 prefix 命中判据是
+ * `pathname === prefix || pathname.startsWith(prefix + '/')`；
+ * 若拿 '/api/nf/ui/' 去注册，只有 `/api/nf/ui/` 本身能命中，
+ * `/api/nf/ui/app.js` 会落到宿主兜底（回 index.html）→
+ * 浏览器把 HTML 当 JS 解析（Unexpected token '<'）→ 装机后业务区整片空白。
+ * 本地 dev-server 挂在根上，永远看不见这一条。
+ */
+export const UI_ROUTE = UI_PREFIX.replace(/\/+$/, '')
 
 /**
  * 开库：config.root 存在则用真目录，否则 :memory: 演示库（seedDemo 唯一源）。
@@ -89,9 +100,10 @@ export function apply(ctx, config = {}) {
 
   // 原型即界面：public/ 经 prefix 路由以静态文件发出（外壳 iframe 的 UI_ENTRY 指向这里）。
   // 只从 public/ 出文件；`..`/绝对路径/符号链接逃逸由 server.js 拒绝。
+  // 注册用 UI_ROUTE（无尾斜杠），否则 app.js / style.css 这类子资源命中不了 prefix。
   ctx.effect(() => ctx.webServer.register({
-    kind: 'prefix', path: UI_PREFIX,
-    handler: guard(createStaticHandler(PUBLIC_DIR, UI_PREFIX)),
+    kind: 'prefix', path: UI_ROUTE,
+    handler: guard(createStaticHandler(PUBLIC_DIR, UI_ROUTE)),
   }, { needStore: false }), 'nf ui')
 
   ctx.effect(() => ctx.webServer.register({

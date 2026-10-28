@@ -42,7 +42,25 @@ export function resolveStatic(root, urlPath) {
   return absReal
 }
 
-/** 生成 {kind:'prefix'} 路由的 handler：prefix 已在宿主侧剥掉，传入的是剩余路径。 */
+/**
+ * 把挂载前缀从 req.url 上剥掉，返回 public/ 内的相对路径。
+ *
+ * 宿主（@deepseek-ai/dsh-host-webserver 的 match）只按
+ * `pathname === prefix || pathname.startsWith(prefix + '/')` 命中 prefix 路由，
+ * 并且**不重写 req.url**。所以这里必须自己认两种形态：
+ *   '/api/nf/ui'        → '/'      （无尾斜杠的目录请求）
+ *   '/api/nf/ui/app.js' → '/app.js'
+ * prefix 带不带尾斜杠都要能用——注册时用无尾斜杠形态，剥的时候两种都认。
+ */
+export function stripMountPrefix(url, prefix) {
+  const bare = String(prefix).replace(/\/+$/, '')
+  const path = String(url).split('?')[0]
+  if (path === bare) return '/'
+  if (path.startsWith(bare + '/')) return path.slice(bare.length)
+  return path
+}
+
+/** 生成 {kind:'prefix'} 路由的 handler：宿主的 prefix 路由不剥前缀，这里统一剥。 */
 export function createStaticHandler(publicDir, prefix) {
   return function handler(req, res, next) {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -50,7 +68,7 @@ export function createStaticHandler(publicDir, prefix) {
       return res.end('Method not allowed')
     }
     const url = String(req.url || '/')
-    const rel = url.startsWith(prefix) ? url.slice(prefix.length) : url
+    const rel = stripMountPrefix(url, prefix)
     const file = resolveStatic(publicDir, rel)
     if (!file) {
       if (typeof next === 'function') return next()
