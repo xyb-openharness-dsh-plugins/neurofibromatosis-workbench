@@ -1,7 +1,7 @@
 /* 小纤宝 FibroPal · 演示数据（原型 prototypes/v0.1 与随包界面 public/ 各一份，必须逐字节一致；
    npm run check 的 check-version-ui 会拦版本漂移与两份不同步） */
 window.NF_DEMO = {
-  version: '0.1.19',
+  version: '0.1.20',
   profile: { name: '林小满', meta: '9 岁 · NF1（记录主体：妈妈代记）', avatar: '满' },
   subtype: {
     type: 'NF1（1 型神经纤维瘤病）',
